@@ -1,0 +1,52 @@
+syntax = "proto3";
+package plugin;
+
+option go_package = "github.com/scottfridman/snoozebot/pkg/plugin";
+
+import "google/protobuf/timestamp.proto";
+
+service CloudProvider {
+  rpc GetInstanceInfo(GetInstanceInfoRequest) returns (GetInstanceInfoResponse);
+  rpc StopInstance(StopInstanceRequest) returns (StopInstanceResponse);
+  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse);
+  rpc GetProviderName(GetProviderNameRequest) returns (GetProviderNameResponse);
+  rpc GetProviderVersion(GetProviderVersionRequest) returns (GetProviderVersionResponse);
+}
+
+message GetInstanceInfoRequest {}
+
+message GetInstanceInfoResponse {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string region = 4;
+  string zone = 5;
+  string state = 6;
+  google.protobuf.Timestamp launch_time = 7;
+}
+
+message StopInstanceRequest {}
+
+message StopInstanceResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message StartInstanceRequest {}
+
+message StartInstanceResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message GetProviderNameRequest {}
+
+message GetProviderNameResponse {
+  string provider_name = 1;
+}
+
+message GetProviderVersionRequest {}
+
+message GetProviderVersionResponse {
+  string provider_version = 1;
+}
