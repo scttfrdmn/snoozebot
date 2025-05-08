@@ -19,7 +19,7 @@ func main() {
 	pluginsDir := flag.String("plugins-dir", "/etc/snoozebot/plugins", "Directory containing plugins")
 	flag.Parse()
 
-	fmt.Println("Starting Snoozebot Agent")
+	fmt.Println("Starting Snoozebot Agent v0.1.0")
 	fmt.Printf("Listening on port: %d\n", *port)
 	fmt.Printf("Plugins directory: %s\n", *pluginsDir)
 

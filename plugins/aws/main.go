@@ -131,7 +131,7 @@ func (p *AWSProvider) GetProviderName() string {
 
 // GetProviderVersion returns the version of the cloud provider plugin
 func (p *AWSProvider) GetProviderVersion() string {
-	return "1.0.0"
+	return "0.1.0"
 }
 
 // ListInstances lists all instances in the account

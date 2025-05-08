@@ -34,7 +34,7 @@ func main() {
 		Output: os.Stdout,
 	})
 
-	logger.Info("Starting snoozed daemon", "version", "1.0.0")
+	logger.Info("Starting snoozed daemon", "version", "0.1.0")
 
 	// Create the plugin manager
 	pluginManager := core.NewPluginManager(*pluginsDir, logger.Named("plugin-manager"))
