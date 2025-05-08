@@ -1,5 +1,6 @@
 #!/bin/bash
 # This script builds all plugins or a specific plugin
+# Now with version information support
 
 set -e
 
@@ -9,6 +10,23 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Project root directory
 PROJECT_ROOT="$SCRIPT_DIR/.."
 
+# Check if the versioned build script exists
+if [ -f "$SCRIPT_DIR/build_versioned_plugins.sh" ]; then
+    # Use the versioned build script if it exists
+    echo "Using versioned plugin build system..."
+    
+    if [ $# -eq 0 ]; then
+        # No arguments, build all plugins with versioning
+        "$SCRIPT_DIR/build_versioned_plugins.sh"
+    else
+        # Build specific plugin with versioning
+        SNOOZEBOT_PLUGIN="$1" "$SCRIPT_DIR/build_versioned_plugins.sh"
+    fi
+    
+    exit $?
+fi
+
+# Fall back to the original implementation if the versioned script doesn't exist
 # Plugins directory
 PLUGINS_DIR="$PROJECT_ROOT/plugins"
 

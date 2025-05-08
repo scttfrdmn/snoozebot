@@ -246,6 +246,11 @@ func (p *AzureProvider) GetProviderVersion() string {
 	return "0.1.0"
 }
 
+// GetAPIVersion returns the API version implemented by the plugin
+func (p *AzureProvider) GetAPIVersion() string {
+	return "0.1.0" // Match the project version
+}
+
 // Shutdown performs cleanup when the plugin is being unloaded
 func (p *AzureProvider) Shutdown() {
 	p.logger.Info("Shutting down Azure provider")

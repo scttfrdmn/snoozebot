@@ -1,4 +1,4 @@
-.PHONY: all daemon cli agent plugins plugin clean version bump-version test test-unit test-integration test-azure
+.PHONY: all daemon cli agent plugins plugin clean version bump-version test test-unit test-integration test-azure security install-tools
 
 # Version information
 VERSION := $(shell cat VERSION 2>/dev/null || echo "0.1.0")
@@ -117,3 +117,19 @@ test: test-unit test-integration
 test-azure:
 	@echo "Running Azure plugin tests..."
 	go test -v ./test/azure/...
+
+# Install security tools
+install-tools:
+	@echo "Installing security tools..."
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install github.com/sonatype-nexus-community/nancy@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+# Run security checks
+security:
+	@echo "Running security checks..."
+	./scripts/security_check.sh
+
+# Run complete CI pipeline including tests and security checks
+ci: test security
+	@echo "CI pipeline completed successfully"

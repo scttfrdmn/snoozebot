@@ -10,11 +10,18 @@ import (
 	"google.golang.org/grpc"
 )
 
+// API version constants
+const (
+	// CurrentAPIVersion is the current API version
+	CurrentAPIVersion = "0.1.0"
+	
+	// ProtocolVersion is the protocol version (this should be incremented for breaking changes)
+	ProtocolVersion = 1
+)
+
 // Handshake is a common handshake that is shared by plugin and host.
 var Handshake = plugin.HandshakeConfig{
-	// This isn't terribly important. You may want to share it under a different
-	// name or value.
-	ProtocolVersion:  1,
+	ProtocolVersion:  ProtocolVersion,
 	MagicCookieKey:   "SNOOZEBOT_PLUGIN",
 	MagicCookieValue: "snoozebot_plugin_v1",
 }
@@ -37,6 +44,9 @@ type InstanceInfo struct {
 
 // CloudProvider is the interface that we expose for cloud provider plugins
 type CloudProvider interface {
+	// GetAPIVersion returns the API version implemented by the plugin
+	GetAPIVersion() string
+	
 	// GetInstanceInfo gets information about the current instance
 	GetInstanceInfo(ctx context.Context) (*InstanceInfo, error)
 	
@@ -51,6 +61,12 @@ type CloudProvider interface {
 	
 	// GetProviderVersion returns the version of the cloud provider plugin
 	GetProviderVersion() string
+	
+	// ListInstances lists all instances
+	ListInstances(ctx context.Context) ([]*InstanceInfo, error)
+	
+	// Shutdown is called when the plugin is being unloaded
+	Shutdown()
 }
 
 // CloudProviderPlugin is the implementation of plugin.Plugin so we can serve/consume this.

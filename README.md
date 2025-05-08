@@ -27,6 +27,7 @@ This architecture allows for:
 - **Embeddable**: Can be used as a library in other Go applications
 - **Secure Plugin System**: Plugins use TLS encryption, signature verification, and API key authentication
 - **Role-Based Access Control**: Fine-grained permission control for plugin operations
+- **Versioned Plugin API**: Semantic versioning with compatibility checking for stable plugin interfaces
 
 ## Embedding in Host Applications
 
@@ -107,6 +108,8 @@ go build -o bin/plugins/azure ./plugins/azure
 - [Plugin TLS](./docs/PLUGIN_TLS.md) - Guide to configuring TLS encryption for secure plugin communication
 - [Plugin Signatures](./docs/PLUGIN_SIGNATURES.md) - Guide to signature verification for plugin authenticity
 - [Plugin Authentication](./docs/PLUGIN_AUTHENTICATION.md) - Guide to API key authentication for plugins
+- [API Versioning](./docs/API_VERSIONING.md) - Guide to the plugin API versioning system
+- [Security Maintenance](./docs/SECURITY_MAINTENANCE.md) - Guide to maintaining security with dependency management
 
 ## License
 

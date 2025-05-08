@@ -1,0 +1,55 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.18'
+
+      - name: Install security tools
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install github.com/sonatype-nexus-community/nancy@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Check for vulnerabilities with govulncheck
+        run: govulncheck ./...
+
+      - name: Check for vulnerabilities with nancy
+        run: |
+          go list -json -deps ./pkg/plugin/version ./pkg/plugin/auth > deps.json
+          cat deps.json | nancy sleuth || echo "Vulnerabilities found"
+
+      - name: Run gosec security scanner
+        run: gosec -exclude-dir=vendor -conf .github/workflows/config/gosec.conf ./pkg/plugin/version ./pkg/plugin/auth
+
+      - name: Run trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          security-checks: 'vuln'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

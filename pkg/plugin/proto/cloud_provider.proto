@@ -5,24 +5,42 @@ option go_package = "github.com/scttfrdmn/snoozebot/pkg/plugin";
 
 import "google/protobuf/timestamp.proto";
 
+// Version 1.0.0 of the CloudProvider service
 service CloudProvider {
+  // GetAPIVersion returns the API version implemented by the plugin
+  rpc GetAPIVersion(GetAPIVersionRequest) returns (GetAPIVersionResponse);
+  
+  // GetInstanceInfo gets information about the current instance
   rpc GetInstanceInfo(GetInstanceInfoRequest) returns (GetInstanceInfoResponse);
+  
+  // StopInstance stops the current instance
   rpc StopInstance(StopInstanceRequest) returns (StopInstanceResponse);
+  
+  // StartInstance starts the current instance
   rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse);
+  
+  // GetProviderName returns the name of the cloud provider
   rpc GetProviderName(GetProviderNameRequest) returns (GetProviderNameResponse);
+  
+  // GetProviderVersion returns the version of the cloud provider plugin
   rpc GetProviderVersion(GetProviderVersionRequest) returns (GetProviderVersionResponse);
+  
+  // ListInstances lists all instances
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse);
+}
+
+// GetAPIVersionRequest is the request for getting API version
+message GetAPIVersionRequest {}
+
+// GetAPIVersionResponse is the response for getting API version
+message GetAPIVersionResponse {
+  string api_version = 1;
 }
 
 message GetInstanceInfoRequest {}
 
 message GetInstanceInfoResponse {
-  string id = 1;
-  string name = 2;
-  string type = 3;
-  string region = 4;
-  string zone = 5;
-  string state = 6;
-  google.protobuf.Timestamp launch_time = 7;
+  InstanceInfo instance = 1;
 }
 
 message StopInstanceRequest {}
@@ -49,4 +67,23 @@ message GetProviderVersionRequest {}
 
 message GetProviderVersionResponse {
   string provider_version = 1;
+}
+
+// ListInstancesRequest is the request for listing instances
+message ListInstancesRequest {}
+
+// ListInstancesResponse is the response for listing instances
+message ListInstancesResponse {
+  repeated InstanceInfo instances = 1;
+}
+
+// InstanceInfo contains information about a cloud instance
+message InstanceInfo {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string region = 4;
+  string zone = 5;
+  string state = 6;
+  google.protobuf.Timestamp launch_time = 7;
 }

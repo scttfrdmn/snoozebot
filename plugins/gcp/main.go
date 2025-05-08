@@ -160,6 +160,19 @@ func (p *GCPProvider) GetProviderVersion() string {
 	return "0.1.0"
 }
 
+// GetAPIVersion returns the API version implemented by the plugin
+func (p *GCPProvider) GetAPIVersion() string {
+	return "0.1.0" // Match the project version
+}
+
+// Shutdown performs cleanup when the plugin is being unloaded
+func (p *GCPProvider) Shutdown() {
+	p.logger.Info("Shutting down GCP provider")
+	if p.instancesClient != nil {
+		p.instancesClient.Close()
+	}
+}
+
 // ListInstances lists all instances in the project and zone
 func (p *GCPProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.InstanceInfo, error) {
 	p.logger.Info("Listing instances", 

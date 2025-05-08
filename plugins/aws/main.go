@@ -144,6 +144,11 @@ func (p *AWSProvider) GetProviderVersion() string {
 	return "0.1.0"
 }
 
+// GetAPIVersion returns the API version implemented by the plugin
+func (p *AWSProvider) GetAPIVersion() string {
+	return "0.1.0" // Match the project version
+}
+
 // ListInstances lists all instances in the current region
 func (p *AWSProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.InstanceInfo, error) {
 	p.logger.Info("Listing instances")
