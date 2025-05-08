@@ -25,6 +25,8 @@ This architecture allows for:
 - **Process Isolation**: Cloud provider plugins run as separate processes for stability and security
 - **Cross-Platform**: Works on Linux, macOS, and Windows
 - **Embeddable**: Can be used as a library in other Go applications
+- **Secure Plugin System**: Plugins use TLS encryption, signature verification, and API key authentication
+- **Role-Based Access Control**: Fine-grained permission control for plugin operations
 
 ## Embedding in Host Applications
 
@@ -64,7 +66,7 @@ Snoozebot supports the following cloud providers through plugins:
 
 - AWS (Amazon Web Services)
 - GCP (Google Cloud Platform) - Planned
-- Azure - Planned
+- Azure (Microsoft Azure Cloud)
 
 ## Agent API
 
@@ -94,6 +96,7 @@ go build -o bin/snooze-agent ./agent/cmd
 
 # Build plugins
 go build -o bin/plugins/aws ./plugins/aws
+go build -o bin/plugins/azure ./plugins/azure
 ```
 
 ## Documentation
@@ -101,6 +104,9 @@ go build -o bin/plugins/aws ./plugins/aws
 - [Refactoring Plan](./REFACTORING_PLAN.md) - Details on the architecture and implementation plan
 - [Embedding Guide](./examples/embedded/README.md) - Guide to embedding the monitor in applications
 - [Plugin Development](./docs/PLUGIN_DEVELOPMENT.md) - Guide to developing cloud provider plugins
+- [Plugin TLS](./docs/PLUGIN_TLS.md) - Guide to configuring TLS encryption for secure plugin communication
+- [Plugin Signatures](./docs/PLUGIN_SIGNATURES.md) - Guide to signature verification for plugin authenticity
+- [Plugin Authentication](./docs/PLUGIN_AUTHENTICATION.md) - Guide to API key authentication for plugins
 
 ## License
 
