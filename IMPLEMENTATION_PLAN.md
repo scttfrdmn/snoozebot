@@ -69,24 +69,24 @@ This document outlines the detailed implementation plan for Snoozebot, tracking 
 - [ ] Test network failure scenarios
 - [ ] Test high-load scenarios
 
-### Phase 3: Remote Agent (Planned)
+### Phase 3: Remote Agent (In Progress)
 
 #### Core Agent Implementation
 - [x] Basic agent structure created
-- [ ] Implement instance state management
+- [x] Implement instance state management
 - [ ] Create scheduler for actions
 - [ ] Implement policy evaluation engine
-- [ ] Add admin REST API
+- [x] Add admin REST API
 
 #### Plugin System
 - [x] Define plugin interfaces
-- [ ] Implement plugin loading and management
-- [ ] Create plugin discovery mechanism
-- [ ] Add plugin versioning and compatibility checks
-- [ ] Implement plugin health monitoring
+- [x] Implement plugin loading and management
+- [x] Create plugin discovery mechanism
+- [x] Add plugin versioning and compatibility checks
+- [x] Implement plugin health monitoring
 
 #### Cloud Provider Plugins
-- [ ] Implement full AWS plugin
+- [x] Implement full AWS plugin
 - [ ] Test with real AWS instances
 - [ ] Implement GCP plugin
 - [ ] Test with real GCP instances
