@@ -2,6 +2,8 @@ package plugin
 
 import (
 	"context"
+	"fmt"
+	"net/rpc"
 	"time"
 
 	"github.com/hashicorp/go-plugin"
@@ -19,7 +21,7 @@ var Handshake = plugin.HandshakeConfig{
 
 // PluginMap is the map of plugins we can dispense.
 var PluginMap = map[string]plugin.Plugin{
-	"cloud_provider": &CloudProviderPlugin{},
+	"cloud_provider": &CloudProviderPlugin{Impl: nil},
 }
 
 // InstanceInfo contains information about a cloud instance
@@ -56,6 +58,18 @@ type CloudProviderPlugin struct {
 	// Concrete implementation, written in Go. This is only used for plugins
 	// that are written in Go.
 	Impl CloudProvider
+}
+
+// Server implements plugin.Plugin interface for serving
+func (p *CloudProviderPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
+	// We're not using this method since we're using gRPC
+	return nil, fmt.Errorf("not implemented")
+}
+
+// Client implements plugin.Plugin interface for consuming
+func (p *CloudProviderPlugin) Client(*plugin.MuxBroker, *rpc.Client) (interface{}, error) {
+	// We're not using this method since we're using gRPC
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GRPCServer registers this plugin for serving with a gRPC server.

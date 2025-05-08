@@ -1,4 +1,4 @@
-.PHONY: all daemon cli agent plugins clean version bump-version
+.PHONY: all daemon cli agent plugins plugin clean version bump-version test test-unit test-integration
 
 # Version information
 VERSION := $(shell cat VERSION 2>/dev/null || echo "0.1.0")
@@ -37,10 +37,22 @@ agent:
 	@mkdir -p $(BINARY_DIR)
 	$(GO_BUILD) $(GO_BUILD_FLAGS) -o $(BINARY_DIR)/$(AGENT_NAME) $(AGENT_SRC)
 
-plugins:
-	@echo "Building plugins..."
+plugins: $(PLUGINS_DIR)
+	@echo "Building all plugins..."
+	./scripts/build_plugins.sh
+
+# Build a specific plugin
+# Usage: make plugin PLUGIN=aws
+plugin: $(PLUGINS_DIR)
+	@if [ -z "$(PLUGIN)" ]; then \
+		echo "Usage: make plugin PLUGIN=aws"; \
+		exit 1; \
+	fi
+	@echo "Building plugin: $(PLUGIN)..."
+	./scripts/build_plugins.sh $(PLUGIN)
+
+$(PLUGINS_DIR):
 	@mkdir -p $(PLUGINS_DIR)
-	$(GO_BUILD) $(GO_BUILD_FLAGS) -o $(PLUGINS_DIR)/aws $(PLUGIN_SRC)/aws
 
 clean:
 	@echo "Cleaning..."
@@ -83,3 +95,16 @@ bump-version:
 	@sed -i '' 's/return "$(VERSION)"/return "$(NEW_VERSION)"/' plugins/aws/main.go || true
 	@sed -i '' 's/Agent v$(VERSION)/Agent v$(NEW_VERSION)/' agent/cmd/main.go || true
 	@echo "Version updated to $(NEW_VERSION)"
+
+# Run unit tests
+test-unit:
+	@echo "Running unit tests..."
+	go test -v ./agent/... ./pkg/... 
+
+# Run integration tests
+test-integration:
+	@echo "Running integration tests..."
+	SNOOZEBOT_RUN_INTEGRATION=true go test -v ./test/integration/...
+
+# Run all tests
+test: test-unit test-integration

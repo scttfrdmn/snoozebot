@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"github.com/scttfrdmn/snoozebot/pkg/plugin"
+	goplugin "github.com/hashicorp/go-plugin"
+	pluginlib "github.com/scttfrdmn/snoozebot/pkg/plugin"
 )
 
 // defaultPluginLogger creates a default logger for plugins
@@ -32,8 +33,8 @@ type PluginManagerImpl struct {
 
 // pluginInstance represents a loaded plugin instance
 type pluginInstance struct {
-	client         plugin.ClientProtocol
-	pluginClient   *plugin.Client
+	client         goplugin.ClientProtocol
+	pluginClient   *goplugin.Client
 	cloudProvider  CloudProvider
 }
 
@@ -67,13 +68,13 @@ func (pm *PluginManagerImpl) LoadPlugin(ctx context.Context, pluginName string) 
 	}
 
 	// Create plugin client
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: plugin.Handshake,
-		Plugins:         plugin.PluginMap,
-		Cmd:             plugin.Command(pluginPath),
+	client := goplugin.NewClient(&goplugin.ClientConfig{
+		HandshakeConfig: pluginlib.Handshake,
+		Plugins:         pluginlib.PluginMap,
+		Cmd:             exec.Command(pluginPath),
 		Logger:          pm.logger,
-		AllowedProtocols: []plugin.Protocol{
-			plugin.ProtocolGRPC,
+		AllowedProtocols: []goplugin.Protocol{
+			goplugin.ProtocolGRPC,
 		},
 	})
 
