@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -13,6 +15,7 @@ import (
 	"github.com/scttfrdmn/snoozebot/agent/store"
 	"github.com/scttfrdmn/snoozebot/pkg/common/protocol"
 	"github.com/scttfrdmn/snoozebot/pkg/common/protocol/gen"
+	"github.com/scttfrdmn/snoozebot/pkg/notification"
 	
 	"google.golang.org/grpc"
 )
@@ -25,6 +28,7 @@ type Server struct {
 	pluginManager          provider.PluginManager
 	authenticatedManager   *provider.PluginManagerWithAuth
 	logger                 hclog.Logger
+	notificationManager    *notification.Manager
 }
 
 // NewServer creates a new API server
@@ -52,6 +56,15 @@ func NewServer(store store.Store, pluginsDir string, configDir string) *Server {
 		}
 	}
 
+	// Initialize notification manager
+	notificationConfigPath := filepath.Join(configDir, "notifications.yaml")
+	notificationManager, err := notification.InitManagerFromConfig(notificationConfigPath, logger)
+	if err != nil {
+		logger.Error("Failed to initialize notification manager", "error", err)
+		// Continue without notifications if it fails
+		notificationManager = notification.NewManager(logger)
+	}
+
 	return &Server{
 		store:                store,
 		pluginsDir:           pluginsDir,
@@ -59,6 +72,7 @@ func NewServer(store store.Store, pluginsDir string, configDir string) *Server {
 		pluginManager:        baseManager,
 		authenticatedManager: authenticatedManager,
 		logger:               logger,
+		notificationManager:  notificationManager,
 	}
 }
 
@@ -217,6 +231,25 @@ func (s *Server) handleIdleNotification(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Send idle notification if we have a notification manager
+	if s.notificationManager != nil {
+		// Get instance name from metadata or use ID if not available
+		instanceName := notification.InstanceID
+		if name, ok := instance.Registration.Metadata["name"]; ok && name != "" {
+			instanceName = name
+		}
+
+		// Send notification about idle instance
+		go s.notificationManager.NotifyIdle(
+			context.Background(),
+			notification.InstanceID,
+			instanceName,
+			instance.Registration.Provider,
+			instance.Registration.Region,
+			notification.IdleDuration,
+		)
+	}
+
 	// Determine action to take
 	var response protocol.IdleNotificationResponse
 
@@ -238,6 +271,27 @@ func (s *Server) handleIdleNotification(w http.ResponseWriter, r *http.Request) 
 		if err := s.store.AddScheduledAction(notification.InstanceID, *response.ScheduledAction); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to add scheduled action: %v", err), http.StatusInternalServerError)
 			return
+		}
+
+		// Send scheduled action notification if we have a notification manager
+		if s.notificationManager != nil {
+			// Get instance name from metadata or use ID if not available
+			instanceName := notification.InstanceID
+			if name, ok := instance.Registration.Metadata["name"]; ok && name != "" {
+				instanceName = name
+			}
+
+			// Send notification about scheduled action
+			go s.notificationManager.NotifyScheduledAction(
+				context.Background(),
+				notification.InstanceID,
+				instanceName,
+				instance.Registration.Provider,
+				instance.Registration.Region,
+				response.ScheduledAction.Action,
+				response.ScheduledAction.ScheduledTime,
+				response.ScheduledAction.Reason,
+			)
 		}
 	} else {
 		response = protocol.IdleNotificationResponse{
@@ -308,6 +362,31 @@ func (s *Server) handleStateChange(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.UpdateInstanceState(stateChange.InstanceID, stateChange.CurrentState); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update instance state: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Send state change notification if we have a notification manager
+	if s.notificationManager != nil {
+		// Get the instance to get additional information
+		instance, err := s.store.GetInstance(stateChange.InstanceID)
+		if err == nil { // Don't fail if we can't get the instance details
+			// Get instance name from metadata or use ID if not available
+			instanceName := stateChange.InstanceID
+			if name, ok := instance.Registration.Metadata["name"]; ok && name != "" {
+				instanceName = name
+			}
+
+			// Send notification about state change
+			go s.notificationManager.NotifyStateChange(
+				context.Background(),
+				stateChange.InstanceID,
+				instanceName,
+				instance.Registration.Provider,
+				instance.Registration.Region,
+				stateChange.PreviousState,
+				stateChange.CurrentState,
+				stateChange.Reason,
+			)
+		}
 	}
 
 	// Return success response
@@ -419,6 +498,31 @@ func (s *Server) handleAdminScheduleAction(w http.ResponseWriter, r *http.Reques
 	if err := s.store.AddScheduledAction(request.InstanceID, request.ScheduledAction); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to add scheduled action: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Send scheduled action notification if we have a notification manager
+	if s.notificationManager != nil {
+		// Get the instance to get additional information
+		instance, err := s.store.GetInstance(request.InstanceID)
+		if err == nil { // Don't fail if we can't get the instance details
+			// Get instance name from metadata or use ID if not available
+			instanceName := request.InstanceID
+			if name, ok := instance.Registration.Metadata["name"]; ok && name != "" {
+				instanceName = name
+			}
+
+			// Send notification about scheduled action
+			go s.notificationManager.NotifyScheduledAction(
+				context.Background(),
+				request.InstanceID,
+				instanceName,
+				instance.Registration.Provider,
+				instance.Registration.Region,
+				request.ScheduledAction.Action,
+				request.ScheduledAction.ScheduledTime,
+				request.ScheduledAction.Reason,
+			)
+		}
 	}
 
 	// Return success response

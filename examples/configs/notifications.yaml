@@ -1,0 +1,21 @@
+providers:
+  slack:
+    enabled: true
+    config:
+      webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+      channel: "#snoozebot-notifications"
+      username: "Snoozebot"
+      icon_emoji: ":robot_face:"
+      # icon_url: "https://example.com/snoozebot-icon.png"  # Alternative to icon_emoji
+
+  # Example configuration for a future email provider
+  # email:
+  #   enabled: false
+  #   config:
+  #     smtp_server: "smtp.example.com"
+  #     smtp_port: 587
+  #     username: "notifications@example.com"
+  #     password: "your_password"
+  #     from: "Snoozebot <notifications@example.com>"
+  #     to: ["admin@example.com", "oncall@example.com"]
+  #     subject_prefix: "[Snoozebot]"

@@ -28,6 +28,7 @@ This architecture allows for:
 - **Secure Plugin System**: Plugins use TLS encryption, signature verification, and API key authentication
 - **Role-Based Access Control**: Fine-grained permission control for plugin operations
 - **Versioned Plugin API**: Semantic versioning with compatibility checking for stable plugin interfaces
+- **Notification System**: Flexible notification framework with Slack integration
 
 ## Embedding in Host Applications
 
@@ -110,6 +111,8 @@ go build -o bin/plugins/azure ./plugins/azure
 - [Plugin Authentication](./docs/PLUGIN_AUTHENTICATION.md) - Guide to API key authentication for plugins
 - [API Versioning](./docs/API_VERSIONING.md) - Guide to the plugin API versioning system
 - [Security Maintenance](./docs/SECURITY_MAINTENANCE.md) - Guide to maintaining security with dependency management
+- [Notification System](./docs/NOTIFICATION_SYSTEM.md) - Guide to the notification framework architecture
+- [Slack Notifications](./docs/SLACK_NOTIFICATIONS.md) - Guide to setting up and using Slack notifications
 
 ## License
 
