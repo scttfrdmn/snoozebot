@@ -144,6 +144,66 @@ func (p *AWSProvider) GetProviderVersion() string {
 	return "0.1.0"
 }
 
+// ListInstances lists all instances in the current region
+func (p *AWSProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.InstanceInfo, error) {
+	p.logger.Info("Listing instances")
+	
+	// Call AWS EC2 API to list instances
+	input := &ec2.DescribeInstancesInput{}
+	
+	result, err := p.ec2Client.DescribeInstances(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list instances: %w", err)
+	}
+	
+	// Process the results and convert to InstanceInfo
+	var instances []*snoozePlugin.InstanceInfo
+	
+	for _, reservation := range result.Reservations {
+		for _, instance := range reservation.Instances {
+			// Extract name from tags
+			var name string
+			for _, tag := range instance.Tags {
+				if *tag.Key == "Name" {
+					name = *tag.Value
+					break
+				}
+			}
+			
+			// Convert state to string
+			state := "unknown"
+			if instance.State != nil {
+				state = string(instance.State.Name)
+			}
+			
+			// Get instance ID
+			instanceID := aws.ToString(instance.InstanceId)
+			
+			// Convert to snoozePlugin.InstanceInfo
+			info := &snoozePlugin.InstanceInfo{
+				ID:         instanceID,
+				Name:       name,
+				Type:       string(instance.InstanceType),
+				Region:     "unknown", // Region information not directly available
+				Zone:       aws.ToString(instance.Placement.AvailabilityZone),
+				State:      state,
+				LaunchTime: aws.ToTime(instance.LaunchTime),
+			}
+			
+			instances = append(instances, info)
+		}
+	}
+	
+	p.logger.Info("Found instances", "count", len(instances))
+	return instances, nil
+}
+
+// Shutdown performs cleanup when the plugin is being unloaded
+func (p *AWSProvider) Shutdown() {
+	p.logger.Info("Shutting down AWS provider")
+	// No explicit cleanup needed for AWS client
+}
+
 func main() {
 	// Create logger
 	logger := hclog.New(&hclog.LoggerOptions{
