@@ -1,0 +1,38 @@
+syntax = "proto3";
+package plugin;
+
+option go_package = "github.com/scttfrdmn/snoozebot/pkg/plugin";
+
+// Authentication service for plugin authentication
+service PluginAuth {
+  // Authenticate authenticates a plugin
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+  
+  // CheckPermission checks if a plugin has a specific permission
+  rpc CheckPermission(PermissionRequest) returns (PermissionResponse);
+}
+
+// AuthenticateRequest is the request for plugin authentication
+message AuthenticateRequest {
+  string plugin_name = 1;
+  string api_key = 2;
+}
+
+// AuthenticateResponse is the response for plugin authentication
+message AuthenticateResponse {
+  bool success = 1;
+  string error_message = 2;
+  string role = 3;
+}
+
+// PermissionRequest is the request for permission checking
+message PermissionRequest {
+  string plugin_name = 1;
+  string permission = 2;
+}
+
+// PermissionResponse is the response for permission checking
+message PermissionResponse {
+  bool allowed = 1;
+  string error_message = 2;
+}

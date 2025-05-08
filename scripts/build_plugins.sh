@@ -39,7 +39,14 @@ build_plugin() {
     fi
     
     # Build the plugin
-    (cd "$PROJECT_ROOT" && go build -v -o "$output_path" "./plugins/$plugin")
+    # Check if plugin has its own go.mod
+    if [ -f "$plugin_dir/go.mod" ]; then
+        # Build using module-aware mode
+        (cd "$plugin_dir" && go build -v -o "$output_path" .)
+    else
+        # Build using standard mode
+        (cd "$PROJECT_ROOT" && go build -v -o "$output_path" "./plugins/$plugin")
+    fi
     
     echo "Plugin $plugin built successfully to $output_path"
     

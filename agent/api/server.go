@@ -19,27 +19,46 @@ import (
 
 // Server handles the HTTP API for the agent
 type Server struct {
-	store         store.Store
-	pluginsDir    string
-	pluginManager provider.PluginManager
-	logger        hclog.Logger
+	store                  store.Store
+	pluginsDir             string
+	configDir              string
+	pluginManager          provider.PluginManager
+	authenticatedManager   *provider.PluginManagerWithAuth
+	logger                 hclog.Logger
 }
 
 // NewServer creates a new API server
-func NewServer(store store.Store, pluginsDir string) *Server {
+func NewServer(store store.Store, pluginsDir string, configDir string) *Server {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "snoozebot-agent",
 		Output: log.Writer(),
 		Level:  hclog.Info,
 	})
 
-	pluginManager := provider.NewPluginManager(pluginsDir, logger)
+	// Create the base plugin manager
+	baseManager := provider.NewPluginManager(pluginsDir, logger)
+	
+	// Create the authenticated plugin manager
+	authenticatedManager, err := provider.NewPluginManagerWithAuth(baseManager, configDir, logger.Named("auth"))
+	if err != nil {
+		logger.Error("Failed to create authenticated plugin manager", "error", err)
+		// Fall back to base manager if authentication fails
+		return &Server{
+			store:         store,
+			pluginsDir:    pluginsDir,
+			configDir:     configDir,
+			pluginManager: baseManager,
+			logger:        logger,
+		}
+	}
 
 	return &Server{
-		store:         store,
-		pluginsDir:    pluginsDir,
-		pluginManager: pluginManager,
-		logger:        logger,
+		store:                store,
+		pluginsDir:           pluginsDir,
+		configDir:            configDir,
+		pluginManager:        baseManager,
+		authenticatedManager: authenticatedManager,
+		logger:               logger,
 	}
 }
 
@@ -91,6 +110,15 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("/api/plugins/load", s.handleLoadPlugin)
 	mux.HandleFunc("/api/plugins/unload", s.handleUnloadPlugin)
 	mux.HandleFunc("/api/plugins/", s.handleGetPluginInfo)
+	
+	// Authentication routes
+	if s.authenticatedManager != nil {
+		mux.HandleFunc("/api/auth/status", s.handleAuthStatus)
+		mux.HandleFunc("/api/auth/enable", s.handleEnableAuth)
+		mux.HandleFunc("/api/auth/disable", s.handleDisableAuth)
+		mux.HandleFunc("/api/auth/apikey", s.handleGenerateAPIKey)
+		mux.HandleFunc("/api/auth/apikey/revoke", s.handleRevokeAPIKey)
+	}
 
 	return mux
 }

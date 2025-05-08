@@ -1,4 +1,4 @@
-.PHONY: all daemon cli agent plugins plugin clean version bump-version test test-unit test-integration
+.PHONY: all daemon cli agent plugins plugin clean version bump-version test test-unit test-integration test-azure
 
 # Version information
 VERSION := $(shell cat VERSION 2>/dev/null || echo "0.1.0")
@@ -65,6 +65,8 @@ install: all
 	@install -m 755 $(BINARY_DIR)/$(CLI_NAME) /usr/local/bin/$(CLI_NAME)
 	@install -m 755 $(BINARY_DIR)/$(AGENT_NAME) /usr/local/bin/$(AGENT_NAME)
 	@install -m 755 $(PLUGINS_DIR)/aws /etc/snoozebot/plugins/aws
+	@install -m 755 $(PLUGINS_DIR)/gcp /etc/snoozebot/plugins/gcp
+	@install -m 755 $(PLUGINS_DIR)/azure /etc/snoozebot/plugins/azure
 
 run-daemon: daemon
 	@echo "Running daemon..."
@@ -93,6 +95,8 @@ bump-version:
 	@echo "$(NEW_VERSION)" > VERSION
 	@sed -i '' 's/version", "$(VERSION)"/version", "$(NEW_VERSION)"/' cmd/snoozed/main.go || true
 	@sed -i '' 's/return "$(VERSION)"/return "$(NEW_VERSION)"/' plugins/aws/main.go || true
+	@sed -i '' 's/return "$(VERSION)"/return "$(NEW_VERSION)"/' plugins/gcp/main.go || true
+	@sed -i '' 's/return "$(VERSION)"/return "$(NEW_VERSION)"/' plugins/azure/main.go || true
 	@sed -i '' 's/Agent v$(VERSION)/Agent v$(NEW_VERSION)/' agent/cmd/main.go || true
 	@echo "Version updated to $(NEW_VERSION)"
 
@@ -108,3 +112,8 @@ test-integration:
 
 # Run all tests
 test: test-unit test-integration
+
+# Run Azure plugin tests
+test-azure:
+	@echo "Running Azure plugin tests..."
+	go test -v ./test/azure/...

@@ -214,7 +214,78 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Serve the plugin
+	// Check for TLS configuration
+	tlsEnabled := os.Getenv("SNOOZEBOT_TLS_ENABLED") == "true"
+	// Check for signature verification configuration
+	signatureEnabled := os.Getenv("SNOOZEBOT_SIGNATURE_ENABLED") == "true"
+	
+	if tlsEnabled || signatureEnabled {
+		var securityOptions struct {
+			TLS       *snoozePlugin.TLSOptions
+			Signature bool
+		}
+		
+		// Configure TLS if enabled
+		if tlsEnabled {
+			logger.Info("TLS enabled for plugin communication")
+			
+			// Set up TLS options
+			securityOptions.TLS = &snoozePlugin.TLSOptions{
+				Enabled: true,
+			}
+			
+			// Check for custom cert paths
+			certFile := os.Getenv("SNOOZEBOT_TLS_CERT_FILE")
+			keyFile := os.Getenv("SNOOZEBOT_TLS_KEY_FILE")
+			caFile := os.Getenv("SNOOZEBOT_TLS_CA_FILE")
+			certDir := os.Getenv("SNOOZEBOT_TLS_CERT_DIR")
+			
+			if certFile != "" && keyFile != "" {
+				securityOptions.TLS.CertFile = certFile
+				securityOptions.TLS.KeyFile = keyFile
+				securityOptions.TLS.CACert = caFile
+				logger.Info("Using provided TLS certificates", "cert", certFile, "key", keyFile, "ca", caFile)
+			} else if certDir != "" {
+				securityOptions.TLS.CertDir = certDir
+				logger.Info("Using TLS certificates from directory", "dir", certDir)
+			} else {
+				logger.Warn("TLS is enabled but no certificates specified, falling back to insecure mode")
+				tlsEnabled = false
+				securityOptions.TLS = nil
+			}
+			
+			// Skip verification in debug mode
+			if os.Getenv("SNOOZEBOT_TLS_SKIP_VERIFY") == "true" {
+				if securityOptions.TLS != nil {
+					securityOptions.TLS.SkipVerify = true
+				}
+				logger.Warn("TLS certificate verification disabled - INSECURE")
+			}
+		}
+		
+		// Configure signatures if enabled
+		if signatureEnabled {
+			logger.Info("Signature verification enabled for plugin")
+			securityOptions.Signature = true
+			
+			// Check signature-related env vars for plugins (these are for informational purposes as
+			// the actual signature is handled by the manager on the host side)
+			signatureDir := os.Getenv("SNOOZEBOT_SIGNATURE_DIR")
+			if signatureDir != "" {
+				logger.Info("Using signature directory", "dir", signatureDir)
+			}
+		}
+		
+		// If security features are enabled, use the secure plugin server
+		if tlsEnabled {
+			// Serve the plugin with TLS (and signature awareness)
+			snoozePlugin.ServePluginWithTLS(gcpProvider, securityOptions.TLS, logger)
+			return
+		}
+	}
+	
+	// Serve the plugin without security features
+	logger.Info("Security features disabled for plugin communication")
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: snoozePlugin.Handshake,
 		Plugins: map[string]plugin.Plugin{

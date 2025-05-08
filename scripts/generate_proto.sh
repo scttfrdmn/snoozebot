@@ -37,4 +37,11 @@ protoc \
   --go-grpc_out="$PLUGIN_GEN_DIR" --go-grpc_opt=paths=source_relative \
   "$PLUGIN_PROTO_DIR/cloud_provider.proto"
 
+# Generate the Go code for plugin auth proto
+protoc \
+  --proto_path="$PLUGIN_PROTO_DIR" \
+  --go_out="$PLUGIN_GEN_DIR" --go_opt=paths=source_relative \
+  --go-grpc_out="$PLUGIN_GEN_DIR" --go-grpc_opt=paths=source_relative \
+  "$PLUGIN_PROTO_DIR/auth.proto"
+
 echo "Generated gRPC code successfully!"

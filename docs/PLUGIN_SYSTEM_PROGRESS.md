@@ -22,17 +22,28 @@ This document tracks the progress of the Snoozebot plugin system implementation,
 - ✅ Unload plugin endpoint
 - ✅ Get plugin info endpoint
 
+### Authentication & Security
+
+- ✅ API key authentication system
+- ✅ Role-based permission system
+- ✅ Authentication REST API endpoints
+- ✅ Secure key generation and validation
+- ✅ Authentication documentation
+- ✅ TLS communication
+- ✅ Plugin signature verification
+
 ### Cloud Provider Plugins
 
 - ✅ AWS plugin implementation
 - ✅ GCP plugin implementation
-- ⬜ Azure plugin implementation (planned)
+- ✅ Azure plugin implementation
 
 ### Testing
 
 - ✅ Unit tests for Plugin Manager
 - ✅ Integration tests for plugin system
 - ✅ Mock plugin for testing
+- ✅ Authentication tests
 - ⬜ Performance benchmarks (planned)
 
 ### Build System
@@ -48,6 +59,7 @@ This document tracks the progress of the Snoozebot plugin system implementation,
 - ✅ Plugin development guide
 - ✅ Cloud provider implementation guidelines
 - ✅ Plugin system implementation summary
+- ✅ Authentication & security documentation
 - ⬜ API documentation (planned)
 
 ## Implementation Details
@@ -122,12 +134,14 @@ The build system includes:
 
 The following steps are planned for future development:
 
-1. Implement Azure plugin
-2. Add authentication and security to the plugin API
-3. Implement versioned plugin APIs
-4. Create a plugin marketplace for community-developed plugins
-5. Add performance benchmarks for the plugin system
-6. Complete API documentation
+1. ✅ Add authentication and security to the plugin API
+2. ✅ Implement TLS communication for plugins
+3. ✅ Add plugin signature verification
+4. Implement versioned plugin APIs
+5. Create a plugin marketplace for community-developed plugins
+6. Add performance benchmarks for the plugin system
+7. Complete API documentation
+8. Add integration tests for all cloud providers
 
 ## Conclusion
 
