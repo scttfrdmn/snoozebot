@@ -7,14 +7,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/scttfrdmn/snoozebot/pkg/common/protocol/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // AgentClient is a client for communicating with the remote agent
 type AgentClient struct {
 	conn         *grpc.ClientConn
-	client       SnoozeAgentClient
+	client       gen.SnoozeAgentClient
 	instanceID   string
 	agentID      string
 	agentURL     string
@@ -51,7 +53,7 @@ func (c *AgentClient) Connect(ctx context.Context) error {
 	}
 
 	c.conn = conn
-	c.client = NewSnoozeAgentClient(conn)
+	c.client = gen.NewSnoozeAgentClient(conn)
 	c.connected = true
 
 	return nil
@@ -106,7 +108,7 @@ func (c *AgentClient) RegisterInstance(ctx context.Context, instanceType, region
 	}
 
 	// Prepare the request
-	req := &InstanceRegistration{
+	req := &gen.InstanceRegistration{
 		InstanceId:   c.instanceID,
 		InstanceType: instanceType,
 		Region:       region,
@@ -142,7 +144,7 @@ func (c *AgentClient) UnregisterInstance(ctx context.Context) error {
 	}
 
 	// Prepare the request
-	req := &UnregisterRequest{
+	req := &gen.UnregisterRequest{
 		InstanceId: c.instanceID,
 	}
 
@@ -172,7 +174,7 @@ func (c *AgentClient) SendIdleNotification(ctx context.Context, idleSince time.T
 	}
 
 	// Prepare the request
-	req := &IdleNotificationRequest{
+	req := &gen.IdleNotificationRequest{
 		InstanceId:    c.instanceID,
 		IdleSince:     idleSince.Unix(),
 		IdleDuration:  int64(idleDuration.Seconds()),
@@ -201,7 +203,7 @@ func (c *AgentClient) SendHeartbeat(ctx context.Context, state string,
 	}
 
 	// Prepare the request
-	req := &HeartbeatRequest{
+	req := &gen.HeartbeatRequest{
 		InstanceId:    c.instanceID,
 		Timestamp:     time.Now().Unix(),
 		State:         state,
@@ -235,7 +237,7 @@ func (c *AgentClient) ReportStateChange(ctx context.Context, previousState,
 	}
 
 	// Prepare the request
-	req := &StateChangeRequest{
+	req := &gen.StateChangeRequest{
 		InstanceId:    c.instanceID,
 		PreviousState: previousState,
 		CurrentState:  currentState,

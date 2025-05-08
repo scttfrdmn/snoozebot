@@ -3,10 +3,13 @@ package plugin
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -162,9 +165,8 @@ func (p *SecurePlugin) Start() error {
 		}
 		
 		clientConfig.TLSConfig = p.TLSConfig
-		clientConfig.SecureConfig = &plugin.SecureConfig{
-			TLSConfig: p.TLSConfig,
-		}
+		// Note: We're not setting SecureConfig here as it's used for binary verification
+		// and not for TLS configuration
 	}
 
 	// Create plugin client

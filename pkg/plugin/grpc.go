@@ -23,7 +23,8 @@ func (m *GRPCCloudProviderServer) GetInstanceInfo(ctx context.Context, req *GetI
 		return nil, err
 	}
 
-	return &GetInstanceInfoResponse{
+	// Create an InstanceInfo protobuf message
+	instance := &InstanceInfo{
 		Id:         info.ID,
 		Name:       info.Name,
 		Type:       info.Type,
@@ -31,6 +32,11 @@ func (m *GRPCCloudProviderServer) GetInstanceInfo(ctx context.Context, req *GetI
 		Zone:       info.Zone,
 		State:      info.State,
 		LaunchTime: timestamppb.New(info.LaunchTime),
+	}
+	
+	// Create response with the instance field set
+	return &GetInstanceInfoResponse{
+		Instance: instance,
 	}, nil
 }
 
@@ -74,29 +80,66 @@ func (m *GRPCCloudProviderServer) GetProviderVersion(ctx context.Context, req *G
 	}, nil
 }
 
+func (m *GRPCCloudProviderServer) ListInstances(ctx context.Context, req *ListInstancesRequest) (*ListInstancesResponse, error) {
+	instances, err := m.Impl.ListInstances(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	protoInstances := make([]*InstanceInfo, len(instances))
+	for i, instance := range instances {
+		protoInstances[i] = &InstanceInfo{
+			Id:         instance.ID,
+			Name:       instance.Name,
+			Type:       instance.Type,
+			Region:     instance.Region,
+			Zone:       instance.Zone,
+			State:      instance.State,
+			LaunchTime: timestamppb.New(instance.LaunchTime),
+		}
+	}
+
+	return &ListInstancesResponse{
+		Instances: protoInstances,
+	}, nil
+}
+
+func (m *GRPCCloudProviderServer) Shutdown(ctx context.Context, req *ShutdownRequest) (*ShutdownResponse, error) {
+	// Call the implementation's Shutdown method
+	m.Impl.Shutdown()
+	
+	return &ShutdownResponse{
+		Success: true,
+	}, nil
+}
+
 // GRPCCloudProviderClient is an implementation of CloudProvider that talks over gRPC.
 type GRPCCloudProviderClient struct {
 	client CloudProviderClient
 }
 
-func (m *GRPCCloudProviderClient) GetInstanceInfo(ctx context.Context) (*InstanceInfo, error) {
+func (m *GRPCCloudProviderClient) GetInstanceInfo(ctx context.Context) (*CloudInstanceInfo, error) {
 	resp, err := m.client.GetInstanceInfo(ctx, &GetInstanceInfoRequest{})
 	if err != nil {
 		return nil, err
 	}
 
-	var launchTime time.Time
-	if resp.LaunchTime != nil {
-		launchTime = resp.LaunchTime.AsTime()
+	if resp.Instance == nil {
+		return nil, fmt.Errorf("received nil instance info from server")
 	}
 
-	return &InstanceInfo{
-		ID:         resp.Id,
-		Name:       resp.Name,
-		Type:       resp.Type,
-		Region:     resp.Region,
-		Zone:       resp.Zone,
-		State:      resp.State,
+	var launchTime time.Time
+	if resp.Instance.LaunchTime != nil {
+		launchTime = resp.Instance.LaunchTime.AsTime()
+	}
+
+	return &CloudInstanceInfo{
+		ID:         resp.Instance.Id,
+		Name:       resp.Instance.Name,
+		Type:       resp.Instance.Type,
+		Region:     resp.Instance.Region,
+		Zone:       resp.Instance.Zone,
+		State:      resp.Instance.State,
 		LaunchTime: launchTime,
 	}, nil
 }
@@ -143,4 +186,40 @@ func (m *GRPCCloudProviderClient) GetProviderVersion() string {
 	}
 
 	return resp.ProviderVersion
+}
+
+func (m *GRPCCloudProviderClient) ListInstances(ctx context.Context) ([]*CloudInstanceInfo, error) {
+	resp, err := m.client.ListInstances(ctx, &ListInstancesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	instances := make([]*CloudInstanceInfo, len(resp.Instances))
+	for i, instance := range resp.Instances {
+		var launchTime time.Time
+		if instance.LaunchTime != nil {
+			launchTime = instance.LaunchTime.AsTime()
+		}
+
+		instances[i] = &CloudInstanceInfo{
+			ID:         instance.Id,
+			Name:       instance.Name,
+			Type:       instance.Type,
+			Region:     instance.Region,
+			Zone:       instance.Zone,
+			State:      instance.State,
+			LaunchTime: launchTime,
+		}
+	}
+
+	return instances, nil
+}
+
+func (m *GRPCCloudProviderClient) Shutdown() {
+	// Send shutdown signal to server
+	_, err := m.client.Shutdown(context.Background(), &ShutdownRequest{})
+	if err != nil {
+		// Just log error, as this is a best-effort operation
+		fmt.Printf("Error during shutdown: %v\n", err)
+	}
 }
