@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/scottfridman/snoozebot/pkg/monitor"
+	"github.com/scttfrdmn/snoozebot/pkg/monitor"
 )
 
 func main() {

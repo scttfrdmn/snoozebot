@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 	
-	"github.com/scottfridman/snoozebot/pkg/common/protocol"
-	"github.com/scottfridman/snoozebot/pkg/monitor/resources"
+	"github.com/scttfrdmn/snoozebot/pkg/common/protocol"
+	"github.com/scttfrdmn/snoozebot/pkg/monitor/resources"
 )
 
 // monitor implements the Monitor interface

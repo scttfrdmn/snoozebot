@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/scottfridman/snoozebot/agent/api"
-	"github.com/scottfridman/snoozebot/agent/store"
+	"github.com/scttfrdmn/snoozebot/agent/api"
+	"github.com/scttfrdmn/snoozebot/agent/store"
 )
 
 func main() {
@@ -32,17 +32,32 @@ func main() {
 
 	// Create API server
 	apiServer := api.NewServer(instanceStore, *pluginsDir)
+	
+	// Discover and initialize plugins
+	go func() {
+		if err := apiServer.DiscoverAndInitPlugins(ctx); err != nil {
+			fmt.Printf("Error discovering plugins: %v\n", err)
+		}
+	}()
 
-	// Start API server in a goroutine
+	// Start REST API server in a goroutine
 	go func() {
 		addr := fmt.Sprintf(":%d", *port)
-		fmt.Printf("API server listening on %s\n", addr)
+		fmt.Printf("REST API server listening on %s\n", addr)
 		
 		if err := http.ListenAndServe(addr, apiServer.Router()); err != nil {
-			fmt.Printf("API server error: %v\n", err)
+			fmt.Printf("REST API server error: %v\n", err)
 			cancel() // Cancel context on server error
 		}
 	}()
+	
+	// Start gRPC server
+	grpcPort := *port + 1 // Use next port for gRPC
+	grpcAddr := fmt.Sprintf(":%d", grpcPort)
+	if err := apiServer.StartGRPCServer(grpcAddr); err != nil {
+		fmt.Printf("gRPC server error: %v\n", err)
+		cancel() // Cancel context on server error
+	}
 
 	// Wait for interrupt signal
 	sigs := make(chan os.Signal, 1)

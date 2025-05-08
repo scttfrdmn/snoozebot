@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/scottfridman/snoozebot/pkg/common/protocol"
+	"github.com/scttfrdmn/snoozebot/pkg/common/protocol"
 )
 
 // InstanceState contains the current state of an instance

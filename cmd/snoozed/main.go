@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/scottfridman/snoozebot/pkg/core"
-	"github.com/scottfridman/snoozebot/pkg/plugin"
+	"github.com/scttfrdmn/snoozebot/pkg/core"
+	"github.com/scttfrdmn/snoozebot/pkg/plugin"
 )
 
 func main() {

@@ -28,7 +28,7 @@ Snoozebot is a system for automatically managing cloud resources by monitoring s
   - Client implementation created ✅
   - Integration with monitor ✅
   - Idle notification flow implemented ✅
-  - Server implementation pending ⏳
+  - Server implementation complete ✅
 - **Phase 3 (Remote Agent)**: Basic structure created, full implementation pending
 - **Phase 4 (Documentation)**: Architecture and API documentation in place, more needed
 
@@ -61,6 +61,7 @@ See [IMPLEMENTATION_PLAN.md](/Users/scttfrdmn/src/snoozebot/IMPLEMENTATION_PLAN.
 ### Remote Agent
 - `/agent/cmd/main.go`: Agent entry point
 - `/agent/api/server.go`: API server for the agent
+- `/agent/api/grpc.go`: gRPC server implementation for agent
 - `/agent/store/store.go`: State storage for the agent
 - `/agent/provider/provider.go`: Cloud provider plugin interfaces
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	hashicorpPlugin "github.com/hashicorp/go-plugin"
-	"github.com/scottfridman/snoozebot/pkg/plugin"
+	"github.com/scttfrdmn/snoozebot/pkg/plugin"
 )
 
 // PluginManager handles the loading and management of plugins

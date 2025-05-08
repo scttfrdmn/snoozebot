@@ -3,25 +3,69 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"time"
 
-	"github.com/scottfridman/snoozebot/agent/store"
-	"github.com/scottfridman/snoozebot/pkg/common/protocol"
+	"github.com/hashicorp/go-hclog"
+	"github.com/scttfrdmn/snoozebot/agent/provider"
+	"github.com/scttfrdmn/snoozebot/agent/store"
+	"github.com/scttfrdmn/snoozebot/pkg/common/protocol"
+	"github.com/scttfrdmn/snoozebot/pkg/common/protocol/gen"
+	
+	"google.golang.org/grpc"
 )
 
 // Server handles the HTTP API for the agent
 type Server struct {
-	store      store.Store
-	pluginsDir string
+	store         store.Store
+	pluginsDir    string
+	pluginManager provider.PluginManager
+	logger        hclog.Logger
 }
 
 // NewServer creates a new API server
 func NewServer(store store.Store, pluginsDir string) *Server {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:   "snoozebot-agent",
+		Output: log.Writer(),
+		Level:  hclog.Info,
+	})
+
+	pluginManager := provider.NewPluginManager(pluginsDir, logger)
+
 	return &Server{
-		store:      store,
-		pluginsDir: pluginsDir,
+		store:         store,
+		pluginsDir:    pluginsDir,
+		pluginManager: pluginManager,
+		logger:        logger,
 	}
+}
+
+// StartGRPCServer starts the gRPC server for agent communication
+func (s *Server) StartGRPCServer(address string) error {
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return fmt.Errorf("failed to listen: %w", err)
+	}
+
+	// Create gRPC server
+	grpcServer := grpc.NewServer()
+	
+	// Register the service
+	agentServer := NewGRPCServer(s.store, s.pluginManager)
+	gen.RegisterSnoozeAgentServer(grpcServer, agentServer)
+	
+	// Start the server in a goroutine
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+	
+	log.Printf("gRPC server started on %s", address)
+	return nil
 }
 
 // Router returns the HTTP router for the API server
@@ -40,6 +84,13 @@ func (s *Server) Router() http.Handler {
 	mux.HandleFunc("/api/admin/instances", s.handleAdminListInstances)
 	mux.HandleFunc("/api/admin/instances/", s.handleAdminGetInstance)
 	mux.HandleFunc("/api/admin/actions", s.handleAdminScheduleAction)
+	
+	// Plugin management routes
+	mux.HandleFunc("/api/plugins", s.handleListPlugins)
+	mux.HandleFunc("/api/plugins/discover", s.handleDiscoverPlugins)
+	mux.HandleFunc("/api/plugins/load", s.handleLoadPlugin)
+	mux.HandleFunc("/api/plugins/unload", s.handleUnloadPlugin)
+	mux.HandleFunc("/api/plugins/", s.handleGetPluginInfo)
 
 	return mux
 }

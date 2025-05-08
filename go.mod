@@ -1,4 +1,4 @@
-module github.com/scottfridman/snoozebot
+module github.com/scttfrdmn/snoozebot
 
 go 1.24.2
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/scottfridman/snoozebot/pkg/core"
+	"github.com/scttfrdmn/snoozebot/pkg/core"
 )
 
 const (

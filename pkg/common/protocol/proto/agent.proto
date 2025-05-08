@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package protocol;
 
-option go_package = "github.com/scottfridman/snoozebot/pkg/common/protocol";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/scttfrdmn/snoozebot/pkg/common/protocol/gen";
 
 service SnoozeAgent {
   // RegisterInstance registers a new instance with the agent
@@ -19,6 +21,13 @@ service SnoozeAgent {
   
   // ReportStateChange reports a state change to the agent
   rpc ReportStateChange(StateChangeRequest) returns (StateChangeResponse);
+  
+  // Cloud Provider Operations
+  rpc GetInstanceInfo(GetInstanceInfoRequest) returns (GetInstanceInfoResponse);
+  rpc StopInstance(StopInstanceRequest) returns (StopInstanceResponse);
+  rpc StartInstance(StartInstanceRequest) returns (StartInstanceResponse);
+  rpc PerformCloudAction(CloudActionRequest) returns (CloudActionResponse);
+  rpc ListCloudProviders(ListCloudProvidersRequest) returns (ListCloudProvidersResponse);
 }
 
 // InstanceRegistration represents the registration of an instance with the agent
@@ -107,4 +116,71 @@ message StateChangeRequest {
 message StateChangeResponse {
   bool acknowledged = 1;
   string error = 2;
+}
+
+// GetInstanceInfoRequest is the request to get instance information
+message GetInstanceInfoRequest {
+  string instance_id = 1;
+}
+
+// GetInstanceInfoResponse is the response with instance information
+message GetInstanceInfoResponse {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string region = 4;
+  string zone = 5;
+  string state = 6;
+  google.protobuf.Timestamp launch_time = 7;
+  string provider = 8;
+}
+
+// StopInstanceRequest is the request to stop an instance
+message StopInstanceRequest {
+  string instance_id = 1;
+}
+
+// StopInstanceResponse is the response to a stop instance request
+message StopInstanceResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// StartInstanceRequest is the request to start an instance
+message StartInstanceRequest {
+  string instance_id = 1;
+}
+
+// StartInstanceResponse is the response to a start instance request
+message StartInstanceResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// CloudActionRequest is the request to perform a cloud action
+message CloudActionRequest {
+  string instance_id = 1;
+  string action = 2;
+  map<string, string> parameters = 3;
+}
+
+// CloudActionResponse is the response to a cloud action request
+message CloudActionResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// ListCloudProvidersRequest is the request to list cloud providers
+message ListCloudProvidersRequest {}
+
+// CloudProviderInfo contains information about a cloud provider
+message CloudProviderInfo {
+  string name = 1;
+  string version = 2;
+  string plugin = 3;
+}
+
+// ListCloudProvidersResponse is the response with cloud provider information
+message ListCloudProvidersResponse {
+  repeated CloudProviderInfo providers = 1;
 }
