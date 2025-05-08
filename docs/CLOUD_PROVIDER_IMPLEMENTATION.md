@@ -7,8 +7,8 @@ This document outlines the guidelines for implementing new cloud providers in Sn
 Each cloud provider implementation should be developed on its own separate branch:
 
 - AWS plugin: Implemented on the main branch as the first reference implementation
-- GCP plugin: Use branch `feature/gcp-provider`
-- Azure plugin: Use branch `feature/azure-provider`
+- GCP plugin: Implemented on branch `feature/gcp-provider`, now merged
+- Azure plugin: Implemented on branch `feature/azure-provider`, now merged
 - Other providers (e.g., DigitalOcean, Oracle Cloud): Each on its own feature branch `feature/{provider-name}`
 
 ## Implementation Workflow

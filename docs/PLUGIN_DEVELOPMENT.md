@@ -341,9 +341,15 @@ GET /api/plugins
       "provider": "gcp",
       "version": "0.1.0",
       "status": "active"
+    },
+    {
+      "name": "azure",
+      "provider": "azure",
+      "version": "0.1.0",
+      "status": "active"
     }
   ],
-  "count": 2
+  "count": 3
 }
 ```
 
@@ -723,6 +729,7 @@ Integration tests for plugins are located in the `test/integration` directory. U
 
 - [AWS Plugin](../plugins/aws/main.go): Example implementation for AWS
 - [GCP Plugin](../plugins/gcp/main.go): Example implementation for GCP
+- [Azure Plugin](../plugins/azure/main.go): Example implementation for Azure
 - [Integration Tests](../test/integration/plugin_integration_test.go): Examples of plugin testing
 
 ## Troubleshooting
