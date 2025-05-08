@@ -160,7 +160,51 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Serve the plugin
+	// Check for TLS configuration
+	tlsEnabled := os.Getenv("SNOOZEBOT_TLS_ENABLED") == "true"
+	
+	if tlsEnabled {
+		logger.Info("TLS enabled for plugin communication")
+		
+		// Set up TLS options
+		tlsOptions := &snoozePlugin.TLSOptions{
+			Enabled: true,
+		}
+		
+		// Check for custom cert paths
+		certFile := os.Getenv("SNOOZEBOT_TLS_CERT_FILE")
+		keyFile := os.Getenv("SNOOZEBOT_TLS_KEY_FILE")
+		caFile := os.Getenv("SNOOZEBOT_TLS_CA_FILE")
+		certDir := os.Getenv("SNOOZEBOT_TLS_CERT_DIR")
+		
+		if certFile != "" && keyFile != "" {
+			tlsOptions.CertFile = certFile
+			tlsOptions.KeyFile = keyFile
+			tlsOptions.CACert = caFile
+			logger.Info("Using provided TLS certificates", "cert", certFile, "key", keyFile, "ca", caFile)
+		} else if certDir != "" {
+			tlsOptions.CertDir = certDir
+			logger.Info("Using TLS certificates from directory", "dir", certDir)
+		} else {
+			logger.Warn("TLS is enabled but no certificates specified, falling back to insecure mode")
+			tlsEnabled = false
+		}
+		
+		// Skip verification in debug mode
+		if os.Getenv("SNOOZEBOT_TLS_SKIP_VERIFY") == "true" {
+			tlsOptions.SkipVerify = true
+			logger.Warn("TLS certificate verification disabled - INSECURE")
+		}
+		
+		if tlsEnabled {
+			// Serve the plugin with TLS
+			snoozePlugin.ServePluginWithTLS(awsProvider, tlsOptions, logger)
+			return
+		}
+	}
+	
+	// Serve the plugin without TLS
+	logger.Info("TLS disabled for plugin communication")
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: snoozePlugin.Handshake,
 		Plugins: map[string]plugin.Plugin{

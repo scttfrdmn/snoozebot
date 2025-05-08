@@ -29,7 +29,7 @@ This document tracks the progress of the Snoozebot plugin system implementation,
 - ✅ Authentication REST API endpoints
 - ✅ Secure key generation and validation
 - ✅ Authentication documentation
-- ⬜ TLS communication (planned)
+- ✅ TLS communication
 - ⬜ Plugin signature verification (planned)
 
 ### Cloud Provider Plugins
@@ -135,12 +135,12 @@ The build system includes:
 The following steps are planned for future development:
 
 1. ✅ Add authentication and security to the plugin API
-2. Implement versioned plugin APIs
-3. Create a plugin marketplace for community-developed plugins
-4. Add performance benchmarks for the plugin system
-5. Complete API documentation
-6. Add integration tests for all cloud providers
-7. Implement TLS communication for plugins
+2. ✅ Implement TLS communication for plugins
+3. Implement versioned plugin APIs
+4. Create a plugin marketplace for community-developed plugins
+5. Add performance benchmarks for the plugin system
+6. Complete API documentation
+7. Add integration tests for all cloud providers
 8. Add plugin signature verification
 
 ## Conclusion

@@ -29,6 +29,10 @@ Snoozebot includes several security features that you should be aware of:
 
 The plugin system includes authentication to prevent unauthorized plugins from being loaded. See [AUTHENTICATION_USAGE.md](docs/AUTHENTICATION_USAGE.md) for details.
 
+### TLS Communication
+
+Plugin communication is secured using TLS to protect against eavesdropping and tampering. See [PLUGIN_TLS.md](docs/PLUGIN_TLS.md) for details.
+
 ### Role-Based Permissions
 
 Plugins are restricted to performing only the operations allowed by their assigned role. This helps limit the potential impact of a compromised plugin.
@@ -53,10 +57,10 @@ When deploying Snoozebot, we recommend following these security best practices:
 
 We are working on the following security enhancements:
 
-1. **TLS communication**: Secure plugin communication with TLS.
-2. **Plugin signature verification**: Verify plugin integrity using cryptographic signatures.
-3. **Enhanced auditing**: Improved logging of security-relevant events.
-4. **Two-factor authentication**: Additional authentication factors for sensitive operations.
+1. **Plugin signature verification**: Verify plugin integrity using cryptographic signatures.
+2. **Enhanced auditing**: Improved logging of security-relevant events.
+3. **Two-factor authentication**: Additional authentication factors for sensitive operations.
+4. **Certificate rotation**: Automatic rotation of TLS certificates.
 
 ## Third-Party Dependencies
 
