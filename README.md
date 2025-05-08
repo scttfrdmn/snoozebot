@@ -113,6 +113,7 @@ go build -o bin/plugins/azure ./plugins/azure
 - [Security Maintenance](./docs/SECURITY_MAINTENANCE.md) - Guide to maintaining security with dependency management
 - [Notification System](./docs/NOTIFICATION_SYSTEM.md) - Guide to the notification framework architecture
 - [Slack Notifications](./docs/SLACK_NOTIFICATIONS.md) - Guide to setting up and using Slack notifications
+- [Email Notifications](./docs/EMAIL_NOTIFICATIONS.md) - Guide to setting up and using email notifications
 
 ## License
 

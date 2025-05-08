@@ -8,14 +8,16 @@ providers:
       icon_emoji: ":robot_face:"
       # icon_url: "https://example.com/snoozebot-icon.png"  # Alternative to icon_emoji
 
-  # Example configuration for a future email provider
-  # email:
-  #   enabled: false
-  #   config:
-  #     smtp_server: "smtp.example.com"
-  #     smtp_port: 587
-  #     username: "notifications@example.com"
-  #     password: "your_password"
-  #     from: "Snoozebot <notifications@example.com>"
-  #     to: ["admin@example.com", "oncall@example.com"]
-  #     subject_prefix: "[Snoozebot]"
+  email:
+    enabled: false  # Set to true to enable email notifications
+    config:
+      smtp_server: "smtp.example.com"
+      smtp_port: 587
+      username: "notifications@example.com"
+      password: "your_password"
+      from_address: "Snoozebot <notifications@example.com>"
+      to_addresses: ["admin@example.com", "oncall@example.com"]
+      subject_prefix: "[Snoozebot]"
+      enable_starttls: true
+      # enable_ssl: false            # Use SSL/TLS connection instead of STARTTLS
+      # skip_tls_verify: false       # Skip TLS certificate verification (not recommended for production)

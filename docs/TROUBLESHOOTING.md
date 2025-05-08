@@ -279,6 +279,10 @@ This guide helps you diagnose and resolve common issues with Snoozebot, particul
 | `NOTIF_PROVIDER_INIT_FAILED` | Failed to initialize notification provider | Check provider configuration |
 | `SLACK_WEBHOOK_INVALID` | Invalid Slack webhook URL | Regenerate webhook URL in Slack |
 | `SLACK_API_ERROR` | Slack API error | Check logs for specific error message |
+| `EMAIL_SMTP_CONNECTION_FAILED` | Failed to connect to SMTP server | Verify server address and port |
+| `EMAIL_AUTHENTICATION_FAILED` | SMTP authentication failed | Check username and password |
+| `EMAIL_TLS_ERROR` | TLS/SSL error | Check TLS configuration or try alternative mode |
+| `EMAIL_SEND_FAILED` | Failed to send email | Check recipient addresses and SMTP configuration |
 
 ## Logging and Debugging
 
@@ -464,6 +468,70 @@ ps -o pid,user,%mem,%cpu,command -p <plugin-pid>
 
 2. Use a YAML validator tool or website
 3. Restore from the example configuration and make changes carefully
+
+### Email Integration Issues
+
+#### Email Notifications Not Being Sent
+
+**Symptoms:**
+- No emails are received
+- Error messages about SMTP connection failures
+- Authentication errors in logs
+
+**Possible Causes:**
+1. Incorrect SMTP server address or port
+2. Invalid username or password
+3. Network connectivity issues
+4. SMTP server restrictions
+5. SSL/TLS configuration issues
+
+**Solutions:**
+1. Verify your SMTP configuration:
+   ```
+   cat /etc/snoozebot/config/notifications.yaml
+   ```
+
+2. Check for firewall rules blocking outgoing SMTP connections
+
+3. Test SMTP connectivity:
+   ```
+   telnet smtp.example.com 587
+   ```
+
+4. For Gmail or other services requiring app passwords, ensure you're using an app password rather than your account password
+
+5. Try both STARTTLS and SSL modes:
+   ```yaml
+   # For STARTTLS:
+   enable_starttls: true
+   enable_ssl: false
+
+   # For SSL:
+   enable_starttls: false
+   enable_ssl: true
+   ```
+
+6. Run the test script to isolate the issue:
+   ```
+   go run scripts/test_email_notification.go -smtp-server=smtp.example.com ...
+   ```
+
+#### Email Formatting Issues
+
+**Symptoms:**
+- Emails are sent but formatting is incorrect
+- Missing information in email content
+- Subject line is malformed
+
+**Possible Causes:**
+1. Email client rendering issues
+2. Character encoding problems
+3. Malformed headers
+
+**Solutions:**
+1. Check email templates in the code
+2. Ensure proper UTF-8 encoding
+3. Verify from_address is correctly formatted (e.g., "Name <email@example.com>")
 
 #### Provider Initialization Failed
 

@@ -68,6 +68,29 @@ The notification system is integrated into the Snoozebot agent at the following 
 
 The notification system is designed to be extensible, making it easy to add new providers or notification types.
 
+## Supported Notification Providers
+
+The following notification providers are included:
+
+### Slack Provider
+
+The Slack provider sends notifications to Slack channels using webhooks. It supports:
+
+- Customizable message formatting with attachments
+- Color-coding based on severity
+- Channel, username, and icon customization
+- Detailed fields based on notification type
+
+### Email Provider
+
+The Email provider sends notifications via SMTP email. It supports:
+
+- SMTP with STARTTLS or SSL/TLS connections
+- Multiple recipients
+- Customizable subject prefix
+- Authentication with username/password
+- Formatted email bodies with detailed information
+
 ### Adding a New Provider
 
 To add a new notification provider:

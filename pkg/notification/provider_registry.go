@@ -2,6 +2,7 @@ package notification
 
 import (
 	"github.com/hashicorp/go-hclog"
+	"github.com/scttfrdmn/snoozebot/pkg/notification/providers/email"
 	"github.com/scttfrdmn/snoozebot/pkg/notification/providers/slack"
 	"github.com/scttfrdmn/snoozebot/pkg/notification/types"
 )
@@ -13,6 +14,9 @@ type ProviderFactory func(logger hclog.Logger) types.NotificationProvider
 var providerFactories = map[string]ProviderFactory{
 	slack.ProviderName: func(logger hclog.Logger) types.NotificationProvider {
 		return slack.New(logger)
+	},
+	email.ProviderName: func(logger hclog.Logger) types.NotificationProvider {
+		return email.New(logger)
 	},
 }
 
