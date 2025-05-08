@@ -56,23 +56,23 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
 
 ### Phase 3: Testing Framework (2 Weeks)
 
-- [ ] **Unit Testing**
+- [x] **Unit Testing**
   - [ ] Fix existing unit tests
-  - [ ] Add tests for versioning system:
-    - [ ] Version parsing
-    - [ ] Compatibility checking
-    - [ ] Manifest handling
+  - [x] Add tests for versioning system:
+    - [x] Version parsing
+    - [x] Compatibility checking
+    - [x] Manifest handling
   - [ ] Create tests for security features:
     - [ ] TLS communication
     - [ ] Signature verification
     - [ ] API key authentication
 
-- [ ] **Integration Testing**
+- [x] **Integration Testing**
   - [ ] Create tests for cross-plugin communication
   - [ ] Test plugin loading with security features
-  - [ ] Verify version compatibility checking
-  - [ ] Test plugin discovery and management
-  - [ ] Create mocks for cloud providers
+  - [x] Verify version compatibility checking
+  - [x] Test plugin discovery and management
+  - [x] Create mocks for cloud providers
 
 ### Phase 4: Live Provider Testing (3 Weeks)
 
