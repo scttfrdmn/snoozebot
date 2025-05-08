@@ -127,6 +127,7 @@ The following steps are planned for future development:
 3. Create a plugin marketplace for community-developed plugins
 4. Add performance benchmarks for the plugin system
 5. Complete API documentation
+6. Add integration tests for all cloud providers
 
 ## Conclusion
 
