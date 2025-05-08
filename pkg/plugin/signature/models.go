@@ -56,6 +56,11 @@ type PluginSignature struct {
 	
 	// ExpiresAt is the time when the signature expires
 	ExpiresAt time.Time `json:"expires_at"`
+	
+	// Non-persistent fields for caching
+	decodedHash []byte
+	decodedSignature []byte
+	hashTimestamp int64
 }
 
 // SigningKey represents a key used for signing plugins

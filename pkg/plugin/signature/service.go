@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -68,13 +69,24 @@ type SignatureService interface {
 
 // SignatureServiceImpl implements the SignatureService interface
 type SignatureServiceImpl struct {
-	config       *SignatureConfig
-	baseDir      string
-	keysDir      string
-	signaturesDir string
-	logger       hclog.Logger
-	keyCache     map[string]*SigningKey
-	cacheMutex   sync.RWMutex
+	config         *SignatureConfig
+	baseDir        string
+	keysDir        string
+	signaturesDir  string
+	logger         hclog.Logger
+	keyCache       map[string]*SigningKey
+	signatureCache map[string]*PluginSignature
+	fileHashCache  map[string]fileHashCacheEntry
+	cacheMutex     sync.RWMutex
+	hashExpiration time.Duration
+}
+
+// fileHashCacheEntry holds cached file hash information
+type fileHashCacheEntry struct {
+	hash      []byte
+	timestamp time.Time
+	fileSize  int64
+	modTime   time.Time
 }
 
 // NewSignatureService creates a new signature service
@@ -135,12 +147,15 @@ func NewSignatureService(baseDir string, logger hclog.Logger) (SignatureService,
 	}
 	
 	return &SignatureServiceImpl{
-		config:        config,
-		baseDir:       baseDir,
-		keysDir:       keysDir,
-		signaturesDir: signaturesDir,
-		logger:        logger,
-		keyCache:      make(map[string]*SigningKey),
+		config:         config,
+		baseDir:        baseDir,
+		keysDir:        keysDir,
+		signaturesDir:  signaturesDir,
+		logger:         logger,
+		keyCache:       make(map[string]*SigningKey),
+		signatureCache: make(map[string]*PluginSignature),
+		fileHashCache:  make(map[string]fileHashCacheEntry),
+		hashExpiration: 30 * time.Minute, // Cache file hashes for 30 minutes by default
 	}, nil
 }
 
@@ -151,19 +166,18 @@ func (s *SignatureServiceImpl) VerifyPluginSignature(pluginName, pluginPath stri
 		return nil
 	}
 	
-	// Find the signature file
-	signaturePath := filepath.Join(s.signaturesDir, pluginName+".sig")
-	if _, err := os.Stat(signaturePath); os.IsNotExist(err) {
-		return fmt.Errorf("signature file not found for plugin: %s", pluginName)
-	}
-	
-	// Load the signature
-	signature, err := LoadSignature(signaturePath)
+	// Get or load the signature (from cache if available)
+	signature, err := s.GetCachedSignature(pluginName)
 	if err != nil {
-		return fmt.Errorf("failed to load signature: %w", err)
+		return fmt.Errorf("failed to get plugin signature: %w", err)
 	}
 	
-	// Check if the key is trusted
+	// Check if the signature has expired
+	if time.Now().After(signature.ExpiresAt) {
+		return fmt.Errorf("signature has expired")
+	}
+	
+	// Check if the key is trusted (this is a fast operation)
 	trusted, err := s.IsTrustedKey(signature.KeyID)
 	if err != nil {
 		return fmt.Errorf("failed to check if key is trusted: %w", err)
@@ -173,15 +187,54 @@ func (s *SignatureServiceImpl) VerifyPluginSignature(pluginName, pluginPath stri
 		return fmt.Errorf("signature key is not trusted: %s", signature.KeyID)
 	}
 	
-	// Get the signing key
+	// Get the signing key (uses internal cache)
 	key, err := s.GetSigningKey(signature.KeyID)
 	if err != nil {
 		return fmt.Errorf("failed to get signing key: %w", err)
 	}
 	
+	// Check if the key is revoked
+	if key.IsRevoked {
+		return fmt.Errorf("signing key is revoked: %s", key.ID)
+	}
+	
+	// Prepare signature for verification (decode cached components)
+	if err := s.PrepareSignatureForVerification(signature); err != nil {
+		return fmt.Errorf("failed to prepare signature: %w", err)
+	}
+	
+	// Compute the hash of the plugin binary (using cache if possible)
+	hash, err := s.ComputeHashCached(pluginPath)
+	if err != nil {
+		return fmt.Errorf("failed to compute hash: %w", err)
+	}
+	
+	// Compare the computed hash with the stored hash
+	if !compareHashes(hash, signature.decodedHash) {
+		return fmt.Errorf("hash mismatch")
+	}
+	
+	// Get the public key
+	publicKeyInterface, err := key.GetPublicKey()
+	if err != nil {
+		return fmt.Errorf("failed to get public key: %w", err)
+	}
+	
 	// Verify the signature
-	if err := signature.Verify(pluginPath, key); err != nil {
-		return fmt.Errorf("signature verification failed: %w", err)
+	switch signature.SignatureAlgorithm {
+	case "RSA-SHA256":
+		rsaPublicKey, ok := publicKeyInterface.(*rsa.PublicKey)
+		if !ok {
+			return fmt.Errorf("public key is not an RSA key")
+		}
+		
+		hashed := sha256.Sum256(signature.decodedHash)
+		err = rsa.VerifyPKCS1v15(rsaPublicKey, crypto.SHA256, hashed[:], signature.decodedSignature)
+		if err != nil {
+			return fmt.Errorf("signature verification failed: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported signature algorithm: %s", signature.SignatureAlgorithm)
 	}
 	
 	s.logger.Info("Plugin signature verified successfully", 
@@ -194,7 +247,7 @@ func (s *SignatureServiceImpl) VerifyPluginSignature(pluginName, pluginPath stri
 
 // SignPlugin signs a plugin
 func (s *SignatureServiceImpl) SignPlugin(pluginName, pluginPath string, keyID string) (*PluginSignature, error) {
-	// Get the signing key
+	// Get the signing key (uses cache)
 	key, err := s.GetSigningKey(keyID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get signing key: %w", err)
@@ -210,8 +263,8 @@ func (s *SignatureServiceImpl) SignPlugin(pluginName, pluginPath string, keyID s
 		return nil, fmt.Errorf("signing key has expired: %s", keyID)
 	}
 	
-	// Compute the hash of the plugin binary
-	hash, err := ComputeHash(pluginPath)
+	// Compute the hash of the plugin binary (with caching)
+	hash, err := s.ComputeHashCached(pluginPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute hash: %w", err)
 	}
@@ -258,6 +311,9 @@ func (s *SignatureServiceImpl) SignPlugin(pluginName, pluginPath string, keyID s
 		Issuer:             key.Name,
 		Timestamp:          time.Now(),
 		ExpiresAt:          time.Now().AddDate(0, 0, DefaultSignatureValidDays),
+		// Cache the decoded values immediately
+		decodedHash:      hash,
+		decodedSignature: signatureBytes,
 	}
 	
 	// Save the signature
@@ -265,6 +321,11 @@ func (s *SignatureServiceImpl) SignPlugin(pluginName, pluginPath string, keyID s
 	if err := signature.SaveSignature(signaturePath); err != nil {
 		return nil, fmt.Errorf("failed to save signature: %w", err)
 	}
+	
+	// Update the signature cache
+	s.cacheMutex.Lock()
+	s.signatureCache[pluginName] = signature
+	s.cacheMutex.Unlock()
 	
 	s.logger.Info("Plugin signed successfully", 
 		"plugin", pluginName,
