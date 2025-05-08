@@ -22,7 +22,11 @@ Snoozebot is a system for automatically managing cloud resources by monitoring s
   - Resource monitoring: GPU monitoring implemented for Linux ✅
   - Monitoring manager implemented ✅
   - Testing infrastructure and unit tests in place ✅
-- **Phase 2 (Agent Communication)**: Protocol defined, implementation pending
+- **Phase 2 (Agent Communication)**: 
+  - Protocol messages defined ✅
+  - gRPC service interface defined ✅
+  - Client implementation created ✅
+  - Server implementation pending ⏳
 - **Phase 3 (Remote Agent)**: Basic structure created, full implementation pending
 - **Phase 4 (Documentation)**: Architecture and API documentation in place, more needed
 
@@ -48,6 +52,9 @@ See [IMPLEMENTATION_PLAN.md](/Users/scttfrdmn/src/snoozebot/IMPLEMENTATION_PLAN.
 
 ### Communication Protocol
 - `/pkg/common/protocol/protocol.go`: Protocol message definitions
+- `/pkg/common/protocol/client.go`: Agent client implementation
+- `/pkg/common/protocol/proto/agent.proto`: gRPC service and message definitions
+- `/pkg/common/protocol/gen/`: Generated gRPC code
 
 ### Remote Agent
 - `/agent/cmd/main.go`: Agent entry point

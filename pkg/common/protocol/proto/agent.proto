@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package protocol;
+
+option go_package = "github.com/scottfridman/snoozebot/pkg/common/protocol";
+
+service SnoozeAgent {
+  // RegisterInstance registers a new instance with the agent
+  rpc RegisterInstance(InstanceRegistration) returns (RegistrationResponse);
+  
+  // UnregisterInstance unregisters an instance from the agent
+  rpc UnregisterInstance(UnregisterRequest) returns (UnregisterResponse);
+  
+  // SendIdleNotification sends an idle notification to the agent
+  rpc SendIdleNotification(IdleNotificationRequest) returns (IdleNotificationResponse);
+  
+  // SendHeartbeat sends a heartbeat to the agent
+  rpc SendHeartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  
+  // ReportStateChange reports a state change to the agent
+  rpc ReportStateChange(StateChangeRequest) returns (StateChangeResponse);
+}
+
+// InstanceRegistration represents the registration of an instance with the agent
+message InstanceRegistration {
+  string instance_id = 1;
+  string instance_type = 2;
+  string region = 3;
+  string zone = 4;
+  string provider = 5;
+  map<string, double> thresholds = 6;
+  int64 nap_time = 7; // in seconds
+  map<string, string> metadata = 8;
+}
+
+// RegistrationResponse is the response to an instance registration
+message RegistrationResponse {
+  bool success = 1;
+  string error = 2;
+  string agent_id = 3;
+  int64 heartbeat_interval = 4; // in seconds
+}
+
+// UnregisterRequest is the request to unregister an instance
+message UnregisterRequest {
+  string instance_id = 1;
+}
+
+// UnregisterResponse is the response to an instance unregistration
+message UnregisterResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// IdleNotificationRequest is the request to send an idle notification
+message IdleNotificationRequest {
+  string instance_id = 1;
+  int64 idle_since = 2; // unix timestamp
+  int64 idle_duration = 3; // in seconds
+  map<string, double> resource_usage = 4;
+}
+
+// IdleNotificationResponse is the response to an idle notification
+message IdleNotificationResponse {
+  string action = 1; // "none", "wait", "stop"
+  string reason = 2;
+  ScheduledAction scheduled_action = 3;
+}
+
+// ScheduledAction represents an action scheduled for an instance
+message ScheduledAction {
+  string action = 1; // "stop", "start"
+  int64 scheduled_time = 2; // unix timestamp
+  string reason = 3;
+}
+
+// HeartbeatRequest is the request to send a heartbeat
+message HeartbeatRequest {
+  string instance_id = 1;
+  int64 timestamp = 2; // unix timestamp
+  string state = 3;
+  map<string, double> resource_usage = 4;
+}
+
+// HeartbeatResponse is the response to a heartbeat
+message HeartbeatResponse {
+  bool acknowledged = 1;
+  repeated Command commands = 2;
+}
+
+// Command represents a command for an instance to execute
+message Command {
+  string command = 1; // "ping", "stop", "start"
+  map<string, string> parameters = 2;
+}
+
+// StateChangeRequest is the request to report a state change
+message StateChangeRequest {
+  string instance_id = 1;
+  string previous_state = 2;
+  string current_state = 3;
+  int64 timestamp = 4; // unix timestamp
+  string reason = 5;
+}
+
+// StateChangeResponse is the response to a state change report
+message StateChangeResponse {
+  bool acknowledged = 1;
+  string error = 2;
+}

@@ -46,8 +46,10 @@ This document outlines the detailed implementation plan for Snoozebot, tracking 
 
 #### Protocol Implementation
 - [x] Define protocol messages
-- [ ] Generate gRPC code from protocol definitions
-- [ ] Implement client-side communication in monitor
+- [x] Define gRPC service interface
+- [x] Create protocol buffer definitions
+- [x] Create script for generating gRPC code
+- [x] Implement client-side communication
 - [ ] Implement server-side handling in agent
 - [ ] Add authentication and security
 
