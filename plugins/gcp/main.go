@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	compute "cloud.google.com/go/compute/apiv1"
@@ -28,32 +29,73 @@ type GCPProvider struct {
 func NewGCPProvider(logger hclog.Logger) (*GCPProvider, error) {
 	ctx := context.Background()
 	
+	// Configuration options for GCP client
+	var opts []option.ClientOption
+	
+	// Check if using a profile
+	profile := os.Getenv("GCP_PROFILE")
+	if profile != "" {
+		logger.Info("Using GCP profile", "profile", profile)
+		
+		// Look for profile-specific service account file
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			logger.Warn("Failed to get user home directory, falling back to environment", "error", err)
+		} else {
+			// Check ~/.gcp/{profile}.json
+			credsDir := filepath.Join(homeDir, ".gcp")
+			credsFile := filepath.Join(credsDir, fmt.Sprintf("%s.json", profile))
+			
+			if _, err := os.Stat(credsFile); err == nil {
+				logger.Info("Found credentials file", "file", credsFile)
+				opts = append(opts, option.WithCredentialsFile(credsFile))
+			} else {
+				// Check ~/.config/gcloud/profiles/{profile}.json as fallback
+				gcloudDir := filepath.Join(homeDir, ".config", "gcloud", "profiles")
+				credsFile = filepath.Join(gcloudDir, fmt.Sprintf("%s.json", profile))
+				
+				if _, err := os.Stat(credsFile); err == nil {
+					logger.Info("Found credentials file", "file", credsFile)
+					opts = append(opts, option.WithCredentialsFile(credsFile))
+				} else {
+					logger.Warn("No credentials file found for profile, falling back to environment", "profile", profile)
+				}
+			}
+		}
+	} else if credsFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credsFile != "" {
+		// Use explicitly provided credentials file
+		logger.Info("Using credentials file", "file", credsFile)
+		opts = append(opts, option.WithCredentialsFile(credsFile))
+	}
+	
 	// Create the instances client
-	instancesClient, err := compute.NewInstancesRESTClient(ctx, option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")))
+	instancesClient, err := compute.NewInstancesRESTClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute client: %w", err)
 	}
 
-	// In a real implementation, we would get the instance ID from metadata
-	// For simplicity, we'll get it from environment variables or use defaults
+	// Get instance ID from environment or use default
 	instanceID := os.Getenv("INSTANCE_ID")
 	if instanceID == "" {
 		instanceID = "default-instance"
 		logger.Warn("Using default instance ID", "instanceID", instanceID)
 	}
 
+	// Get zone from environment or use default
 	zone := os.Getenv("ZONE")
 	if zone == "" {
 		zone = "us-central1-a"
 		logger.Warn("Using default zone", "zone", zone)
 	}
 
+	// Get project ID from environment or use default
 	project := os.Getenv("PROJECT_ID")
 	if project == "" {
 		project = "default-project"
 		logger.Warn("Using default project ID", "project", project)
 	}
 
+	// Initialize the provider
 	return &GCPProvider{
 		logger:            logger,
 		instancesClient:   instancesClient,

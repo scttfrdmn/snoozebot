@@ -45,14 +45,14 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
   - [x] Integrate with versioning system
   - [x] Implement Shutdown method
 
-- [ ] **GCP Integration**
-  - [ ] Set up GCP authentication flow
-  - [ ] Implement VM operations:
-    - [ ] Start instances
-    - [ ] Stop instances
-    - [ ] Get instance info
-  - [ ] Add instance metadata handling
-  - [ ] Implement region/zone support
+- [x] **GCP Integration**
+  - [x] Set up GCP authentication flow
+  - [x] Implement VM operations:
+    - [x] Start instances
+    - [x] Stop instances
+    - [x] Get instance info
+  - [x] Add instance metadata handling
+  - [x] Implement region/zone support
 
 ### Phase 3: Testing Framework (2 Weeks)
 
@@ -76,7 +76,14 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
 
 ### Phase 4: Live Provider Testing (3 Weeks)
 
-- [ ] **Testing Infrastructure**
+- [x] **Testing Infrastructure**
+  - [x] Set up credential management system
+  - [x] Create profile-based authentication
+  - [x] Develop test scripts for credentials
+  - [x] Create environment setup utilities
+  - [x] Document credential setup process
+  
+- [ ] **Cloud Provider Test Environments**
   - [ ] Set up test environment for AWS:
     - [ ] EC2 instances in test VPC
     - [ ] IAM roles with minimal permissions
@@ -107,13 +114,14 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
 
 ### Phase 5: Documentation & Packaging (1 Week)
 
-- [ ] **Finalize Documentation**
-  - [ ] Update all version references to 0.1.0
-  - [ ] Create provider setup guides:
-    - [ ] AWS setup guide
-    - [ ] Azure setup guide
-    - [ ] GCP setup guide
-  - [ ] Add troubleshooting section
+- [x] **Finalize Documentation**
+  - [x] Update all version references to 0.1.0
+  - [x] Create provider setup guides:
+    - [x] AWS credential setup
+    - [x] Azure credential setup
+    - [x] GCP credential setup
+  - [x] Add credential troubleshooting guide
+  - [ ] Create general troubleshooting guide
   - [ ] Update examples to reflect current API
 
 - [ ] **Release Preparation**

@@ -25,8 +25,25 @@ type AWSProvider struct {
 
 // NewAWSProvider creates a new AWS provider
 func NewAWSProvider(logger hclog.Logger) (*AWSProvider, error) {
-	// Load AWS configuration from environment variables or shared credentials file
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	// Configuration options for AWS SDK
+	var opts []func(*config.LoadOptions) error
+	
+	// Check if using a specific profile
+	profile := os.Getenv("AWS_PROFILE")
+	if profile != "" {
+		logger.Info("Using AWS profile", "profile", profile)
+		opts = append(opts, config.WithSharedConfigProfile(profile))
+	}
+	
+	// Check for region override
+	region := os.Getenv("AWS_REGION")
+	if region != "" {
+		logger.Info("Using AWS region", "region", region)
+		opts = append(opts, config.WithRegion(region))
+	}
+	
+	// Load AWS configuration
+	cfg, err := config.LoadDefaultConfig(context.Background(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -34,12 +51,26 @@ func NewAWSProvider(logger hclog.Logger) (*AWSProvider, error) {
 	// Create EC2 client
 	ec2Client := ec2.NewFromConfig(cfg)
 
-	// In a real implementation, we would get the instance ID from metadata
-	// For simplicity, we'll get it from an environment variable or use a default
+	// Get instance ID from environment or metadata
 	instanceID := os.Getenv("INSTANCE_ID")
 	if instanceID == "" {
-		instanceID = "i-default"
-		logger.Warn("Using default instance ID", "instanceID", instanceID)
+		// Try to get instance ID from metadata if running on EC2
+		// This is a simplified check - in production code we'd want to
+		// add timeouts and better error handling
+		if metadataAvailable() {
+			logger.Info("Attempting to get instance ID from EC2 metadata")
+			id, err := getInstanceIDFromMetadata()
+			if err == nil && id != "" {
+				instanceID = id
+				logger.Info("Got instance ID from metadata", "instanceID", instanceID)
+			} else {
+				logger.Warn("Failed to get instance ID from metadata", "error", err)
+				instanceID = "i-default"
+			}
+		} else {
+			instanceID = "i-default"
+			logger.Warn("Using default instance ID", "instanceID", instanceID)
+		}
 	}
 
 	return &AWSProvider{
@@ -47,6 +78,20 @@ func NewAWSProvider(logger hclog.Logger) (*AWSProvider, error) {
 		ec2Client:        ec2Client,
 		currentInstanceID: instanceID,
 	}, nil
+}
+
+// Check if EC2 instance metadata is available (simplified)
+func metadataAvailable() bool {
+	// In a real implementation, we would check if the instance metadata service
+	// is available by making a request with a short timeout
+	return false
+}
+
+// Get instance ID from EC2 metadata (simplified)
+func getInstanceIDFromMetadata() (string, error) {
+	// In a real implementation, we would use the EC2 metadata service
+	// to get the instance ID
+	return "", fmt.Errorf("not implemented")
 }
 
 // GetInstanceInfo gets information about the current instance

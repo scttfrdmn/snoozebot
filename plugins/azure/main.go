@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -63,10 +64,45 @@ func NewAzureProvider(logger hclog.Logger) (*AzureProvider, error) {
 		logger.Warn("AZURE_VM_NAME not set, using default", "vm_name", vmName)
 	}
 
-	// Create a credential using DefaultAzureCredential
-	credential, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create credential: %w", err)
+	// Check if using a specific profile
+	var credential azcore.TokenCredential
+	var err error
+	
+	profile := os.Getenv("AZURE_PROFILE")
+	if profile != "" {
+		logger.Info("Using Azure profile", "profile", profile)
+		
+		// Look for profile configuration file
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			logger.Warn("Failed to get user home directory", "error", err)
+		} else {
+			// Check for profile in ~/.azure/profiles/{profile}.json
+			profilesDir := filepath.Join(homeDir, ".azure", "profiles")
+			profileFile := filepath.Join(profilesDir, fmt.Sprintf("%s.json", profile))
+			
+			if _, err := os.Stat(profileFile); err == nil {
+				logger.Info("Found profile configuration", "file", profileFile)
+				os.Setenv("AZURE_AUTH_LOCATION", profileFile)
+				
+				// Load credential from file (this uses AZURE_AUTH_LOCATION set above)
+				credential, err = azidentity.NewClientCredentialFromFile(profileFile, nil)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load credentials from profile: %w", err)
+				}
+			} else {
+				logger.Warn("Profile file not found, falling back to default credentials", "profile", profile)
+			}
+		}
+	}
+	
+	// If no profile or profile loading failed, use DefaultAzureCredential
+	if credential == nil {
+		logger.Info("Using default Azure credential chain")
+		credential, err = azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create credential: %w", err)
+		}
 	}
 
 	// Create the VM client
