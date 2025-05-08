@@ -9,9 +9,12 @@ This guide helps you diagnose and resolve common issues with Snoozebot, particul
    - [Signature Verification Issues](#signature-verification-issues)
    - [Authentication Issues](#authentication-issues)
 2. [Plugin System Troubleshooting](#plugin-system-troubleshooting)
-3. [Common Error Codes](#common-error-codes)
-4. [Logging and Debugging](#logging-and-debugging)
-5. [Getting Help](#getting-help)
+3. [Notification System Troubleshooting](#notification-system-troubleshooting)
+   - [Slack Integration Issues](#slack-integration-issues)
+   - [Configuration Issues](#notification-configuration-issues)
+4. [Common Error Codes](#common-error-codes)
+5. [Logging and Debugging](#logging-and-debugging)
+6. [Getting Help](#getting-help)
 
 ## Security Feature Troubleshooting
 
@@ -271,6 +274,11 @@ This guide helps you diagnose and resolve common issues with Snoozebot, particul
 | `AUTH_PERMISSION_DENIED` | Permission denied | Use an API key with required roles |
 | `PLUGIN_NOT_FOUND` | Plugin not found | Check plugin path and rebuild if necessary |
 | `PLUGIN_COMM_FAILED` | Plugin communication failed | Check plugin process and logs |
+| `NOTIF_CONFIG_NOT_FOUND` | Notification configuration not found | Create or restore configuration file |
+| `NOTIF_CONFIG_PARSE_ERROR` | Failed to parse notification configuration | Fix YAML syntax errors |
+| `NOTIF_PROVIDER_INIT_FAILED` | Failed to initialize notification provider | Check provider configuration |
+| `SLACK_WEBHOOK_INVALID` | Invalid Slack webhook URL | Regenerate webhook URL in Slack |
+| `SLACK_API_ERROR` | Slack API error | Check logs for specific error message |
 
 ## Logging and Debugging
 
@@ -350,3 +358,134 @@ sudo strace -p <plugin-pid> -e trace=network
 # Check plugin memory usage
 ps -o pid,user,%mem,%cpu,command -p <plugin-pid>
 ```
+
+## Notification System Troubleshooting
+
+### Slack Integration Issues
+
+#### Slack Notifications Not Being Sent
+
+**Symptoms:**
+- No messages appear in the Slack channel
+- No error messages in logs
+- Agent appears to function normally
+
+**Possible Causes:**
+1. Webhook URL is invalid or expired
+2. Slack app doesn't have permission to post to the channel
+3. Notification configuration is incorrect
+4. Network connectivity issues
+
+**Solutions:**
+1. Verify your webhook URL is correct:
+   ```
+   cat /etc/snoozebot/config/notifications.yaml
+   ```
+
+2. Generate a new webhook URL in Slack:
+   - Go to https://api.slack.com/apps
+   - Select your app
+   - Navigate to "Incoming Webhooks"
+   - Create a new webhook for your channel
+
+3. Check network connectivity to Slack's API:
+   ```
+   curl -i https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+   ```
+   (Use your actual webhook URL)
+
+4. Enable debug logging to see detailed Slack API interactions:
+   ```
+   export SNOOZEBOT_LOG_LEVEL=debug
+   ```
+
+#### Message Formatting Issues
+
+**Symptoms:**
+- Messages appear in Slack but formatting is incorrect
+- Missing information in notifications
+- Attachments not displaying correctly
+
+**Possible Causes:**
+1. Template or formatting code is outdated
+2. Incompatible Slack API features
+
+**Solutions:**
+1. Check the notification message templates
+2. Update to the latest version of Snoozebot
+3. Verify your Slack app has all required permissions
+
+### Notification Configuration Issues
+
+#### Configuration Not Found
+
+**Symptoms:**
+- Error message: "Failed to load notification configuration"
+- Notifications are not sent
+
+**Possible Causes:**
+1. Configuration file is missing
+2. Configuration file is in the wrong location
+3. Permissions issue
+
+**Solutions:**
+1. Check if the configuration file exists:
+   ```
+   ls -la /etc/snoozebot/config/notifications.yaml
+   ```
+
+2. Create a default configuration file:
+   ```
+   mkdir -p /etc/snoozebot/config
+   cp ./examples/configs/notifications.yaml /etc/snoozebot/config/
+   ```
+
+3. Edit the configuration file with your settings:
+   ```
+   nano /etc/snoozebot/config/notifications.yaml
+   ```
+
+#### Invalid YAML Format
+
+**Symptoms:**
+- Error message: "Failed to parse notification configuration"
+- YAML parsing errors in logs
+
+**Possible Causes:**
+1. Syntax errors in YAML file
+2. Incorrect indentation
+3. Invalid characters
+
+**Solutions:**
+1. Validate your YAML file:
+   ```
+   yamllint /etc/snoozebot/config/notifications.yaml
+   ```
+
+2. Use a YAML validator tool or website
+3. Restore from the example configuration and make changes carefully
+
+#### Provider Initialization Failed
+
+**Symptoms:**
+- Error message: "Failed to initialize notification provider"
+- Specific provider errors in logs
+
+**Possible Causes:**
+1. Missing required configuration
+2. Invalid credentials
+3. Network connectivity issues
+
+**Solutions:**
+1. Check provider-specific configuration:
+   ```
+   cat /etc/snoozebot/config/notifications.yaml
+   ```
+
+2. Update provider credentials if needed
+3. Enable debug logging for detailed initialization errors:
+   ```
+   export SNOOZEBOT_LOG_LEVEL=debug
+   ```
+
+4. Try with a different notification provider to isolate the issue

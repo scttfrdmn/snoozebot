@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/scttfrdmn/snoozebot/pkg/notification/types"
 )
 
 // Manager manages notification providers and handles sending notifications
 type Manager struct {
-	providers map[string]NotificationProvider
+	providers map[string]types.NotificationProvider
 	logger    hclog.Logger
 	mu        sync.RWMutex
 }
@@ -19,13 +20,13 @@ type Manager struct {
 // NewManager creates a new notification manager
 func NewManager(logger hclog.Logger) *Manager {
 	return &Manager{
-		providers: make(map[string]NotificationProvider),
+		providers: make(map[string]types.NotificationProvider),
 		logger:    logger.Named("notification-manager"),
 	}
 }
 
 // RegisterProvider registers a notification provider
-func (m *Manager) RegisterProvider(provider NotificationProvider) error {
+func (m *Manager) RegisterProvider(provider types.NotificationProvider) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -59,7 +60,7 @@ func (m *Manager) InitProvider(name string, config map[string]interface{}) error
 }
 
 // SendNotification sends a notification to all registered providers
-func (m *Manager) SendNotification(ctx context.Context, notification *Notification) []error {
+func (m *Manager) SendNotification(ctx context.Context, notification *types.Notification) []error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -78,7 +79,7 @@ func (m *Manager) SendNotification(ctx context.Context, notification *Notificati
 
 	for name, provider := range m.providers {
 		wg.Add(1)
-		go func(name string, provider NotificationProvider) {
+		go func(name string, provider types.NotificationProvider) {
 			defer wg.Done()
 
 			err := provider.Send(ctx, notification)
@@ -101,9 +102,9 @@ func (m *Manager) SendNotification(ctx context.Context, notification *Notificati
 
 // NotifyIdle creates and sends an idle notification
 func (m *Manager) NotifyIdle(ctx context.Context, instanceID, instanceName, provider, region string, idleDuration time.Duration) []error {
-	notification := &Notification{
-		Type:         NotificationTypeIdle,
-		Severity:     SeverityInfo,
+	notification := &types.Notification{
+		Type:         types.NotificationTypeIdle,
+		Severity:     types.SeverityInfo,
 		InstanceID:   instanceID,
 		InstanceName: instanceName,
 		Provider:     provider,
@@ -120,9 +121,9 @@ func (m *Manager) NotifyIdle(ctx context.Context, instanceID, instanceName, prov
 
 // NotifyScheduledAction creates and sends a scheduled action notification
 func (m *Manager) NotifyScheduledAction(ctx context.Context, instanceID, instanceName, provider, region, action string, scheduledTime time.Time, reason string) []error {
-	notification := &Notification{
-		Type:         NotificationTypeScheduledAction,
-		Severity:     SeverityWarning,
+	notification := &types.Notification{
+		Type:         types.NotificationTypeScheduledAction,
+		Severity:     types.SeverityWarning,
 		InstanceID:   instanceID,
 		InstanceName: instanceName,
 		Provider:     provider,
@@ -141,9 +142,9 @@ func (m *Manager) NotifyScheduledAction(ctx context.Context, instanceID, instanc
 
 // NotifyActionExecuted creates and sends an action executed notification
 func (m *Manager) NotifyActionExecuted(ctx context.Context, instanceID, instanceName, provider, region, action, result string) []error {
-	notification := &Notification{
-		Type:         NotificationTypeActionExecuted,
-		Severity:     SeverityInfo,
+	notification := &types.Notification{
+		Type:         types.NotificationTypeActionExecuted,
+		Severity:     types.SeverityInfo,
 		InstanceID:   instanceID,
 		InstanceName: instanceName,
 		Provider:     provider,
@@ -161,9 +162,9 @@ func (m *Manager) NotifyActionExecuted(ctx context.Context, instanceID, instance
 
 // NotifyError creates and sends an error notification
 func (m *Manager) NotifyError(ctx context.Context, instanceID, instanceName, provider, region, errorType, errorMessage string) []error {
-	notification := &Notification{
-		Type:         NotificationTypeError,
-		Severity:     SeverityError,
+	notification := &types.Notification{
+		Type:         types.NotificationTypeError,
+		Severity:     types.SeverityError,
 		InstanceID:   instanceID,
 		InstanceName: instanceName,
 		Provider:     provider,
@@ -180,9 +181,9 @@ func (m *Manager) NotifyError(ctx context.Context, instanceID, instanceName, pro
 
 // NotifyStateChange creates and sends a state change notification
 func (m *Manager) NotifyStateChange(ctx context.Context, instanceID, instanceName, provider, region, previousState, currentState, reason string) []error {
-	notification := &Notification{
-		Type:         NotificationTypeStateChange,
-		Severity:     SeverityInfo,
+	notification := &types.Notification{
+		Type:         types.NotificationTypeStateChange,
+		Severity:     types.SeverityInfo,
 		InstanceID:   instanceID,
 		InstanceName: instanceName,
 		Provider:     provider,

@@ -27,11 +27,11 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
     - [x] strings (fixed in code)
     - [x] filepath (fixed in code)
     - [x] x509 (fixed in code)
-  - [ ] Fix undefined references in plugin/auth/service.go:
-    - [ ] UnimplementedPluginAuthServer
-    - [ ] PluginAuthClient
-    - [ ] AuthenticateRequest/Response
-    - [ ] PermissionRequest/Response
+  - [x] Fix undefined references in plugin/auth/service.go:
+    - [x] UnimplementedPluginAuthServer
+    - [x] PluginAuthClient
+    - [x] AuthenticateRequest/Response
+    - [x] PermissionRequest/Response
   - [ ] Fix struct field issues with TLSConfig in SecureConfig
   - [ ] Resolve type conflicts in monitor code
 
@@ -62,10 +62,10 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
     - [x] Version parsing
     - [x] Compatibility checking
     - [x] Manifest handling
-  - [ ] Create tests for security features:
-    - [ ] TLS communication
-    - [ ] Signature verification
-    - [ ] API key authentication
+  - [x] Create tests for security features:
+    - [x] TLS communication
+    - [x] Signature verification
+    - [x] API key authentication
 
 - [x] **Integration Testing**
   - [ ] Create tests for cross-plugin communication
@@ -121,7 +121,7 @@ This document outlines the plan to prepare Snoozebot for a stable 0.1.0 release.
     - [x] Azure credential setup
     - [x] GCP credential setup
   - [x] Add credential troubleshooting guide
-  - [ ] Create general troubleshooting guide
+  - [x] Create general troubleshooting guide
   - [ ] Update examples to reflect current API
 
 - [ ] **Release Preparation**

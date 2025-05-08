@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/scttfrdmn/snoozebot/pkg/notification"
+	"github.com/scttfrdmn/snoozebot/pkg/notification/types"
 )
 
 const (
@@ -73,24 +73,24 @@ type AttachmentField struct {
 	Short bool   `json:"short,omitempty"`
 }
 
-// Provider implements notification.NotificationProvider for Slack
+// Provider implements types.NotificationProvider for Slack
 type Provider struct {
 	config        Config
 	client        *http.Client
 	logger        hclog.Logger
 	initialized   bool
-	severityColor map[notification.Severity]string
+	severityColor map[types.Severity]string
 }
 
 // New creates a new Slack notification provider
 func New(logger hclog.Logger) *Provider {
 	return &Provider{
 		logger: logger.Named("slack"),
-		severityColor: map[notification.Severity]string{
-			notification.SeverityInfo:     "#36a64f", // Green
-			notification.SeverityWarning:  "#ffcc00", // Yellow
-			notification.SeverityError:    "#ff3300", // Red
-			notification.SeverityCritical: "#ff0000", // Bright Red
+		severityColor: map[types.Severity]string{
+			types.SeverityInfo:     "#36a64f", // Green
+			types.SeverityWarning:  "#ffcc00", // Yellow
+			types.SeverityError:    "#ff3300", // Red
+			types.SeverityCritical: "#ff0000", // Bright Red
 		},
 	}
 }
@@ -135,7 +135,7 @@ func (p *Provider) Init(config map[string]interface{}) error {
 }
 
 // Send sends a notification to Slack
-func (p *Provider) Send(ctx context.Context, n *notification.Notification) error {
+func (p *Provider) Send(ctx context.Context, n *types.Notification) error {
 	if !p.initialized {
 		return fmt.Errorf("provider not initialized")
 	}
@@ -188,7 +188,7 @@ func (p *Provider) Close() error {
 }
 
 // createMessage creates a Slack message from a notification
-func (p *Provider) createMessage(n *notification.Notification) Message {
+func (p *Provider) createMessage(n *types.Notification) Message {
 	// Basic message
 	message := Message{
 		Channel:   p.config.Channel,
@@ -200,7 +200,7 @@ func (p *Provider) createMessage(n *notification.Notification) Message {
 	// Set the color based on severity
 	color := p.severityColor[n.Severity]
 	if color == "" {
-		color = p.severityColor[notification.SeverityInfo]
+		color = p.severityColor[types.SeverityInfo]
 	}
 
 	// Create a formatted representation of the instance
@@ -237,7 +237,7 @@ func (p *Provider) createMessage(n *notification.Notification) Message {
 
 	// Add additional data fields based on notification type
 	switch n.Type {
-	case notification.NotificationTypeIdle:
+	case types.NotificationTypeIdle:
 		if idleDuration, ok := n.Data["idle_duration"].(string); ok {
 			fields = append(fields, AttachmentField{
 				Title: "Idle Duration",
@@ -246,7 +246,7 @@ func (p *Provider) createMessage(n *notification.Notification) Message {
 			})
 		}
 
-	case notification.NotificationTypeScheduledAction:
+	case types.NotificationTypeScheduledAction:
 		if action, ok := n.Data["action"].(string); ok {
 			fields = append(fields, AttachmentField{
 				Title: "Action",
@@ -271,7 +271,7 @@ func (p *Provider) createMessage(n *notification.Notification) Message {
 			})
 		}
 
-	case notification.NotificationTypeActionExecuted:
+	case types.NotificationTypeActionExecuted:
 		if action, ok := n.Data["action"].(string); ok {
 			fields = append(fields, AttachmentField{
 				Title: "Action",
@@ -288,7 +288,7 @@ func (p *Provider) createMessage(n *notification.Notification) Message {
 			})
 		}
 
-	case notification.NotificationTypeStateChange:
+	case types.NotificationTypeStateChange:
 		if previousState, ok := n.Data["previous_state"].(string); ok {
 			fields = append(fields, AttachmentField{
 				Title: "Previous State",
