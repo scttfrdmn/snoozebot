@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 	
+	"github.com/scottfridman/snoozebot/pkg/common/protocol"
 	"github.com/scottfridman/snoozebot/pkg/monitor/resources"
 )
 
@@ -273,9 +274,46 @@ func (m *monitor) checkIdleState() {
 			
 			// If we've reached the naptime threshold, notify the agent
 			if m.currentState.IdleDuration >= m.config.NapTime {
-				// In a real implementation, we would notify the agent here
-				// For now, we'll just log it
-				fmt.Printf("System has been idle for %s, notifying agent\n", m.currentState.IdleDuration)
+				// Only notify if we're connected to an agent
+				if m.currentState.Connected {
+					fmt.Printf("System has been idle for %s, notifying agent\n", m.currentState.IdleDuration)
+					
+					// This would be better done in a separate goroutine 
+					// and with a reference to the agent client
+					go func() {
+						// Create a new agent client just for this notification
+						client := protocol.NewAgentClient(m.config.AgentURL, getInstanceID())
+						err := client.Connect(context.Background())
+						if err != nil {
+							m.handleError(fmt.Errorf("failed to connect to agent for idle notification: %w", err))
+							return
+						}
+						defer client.Disconnect()
+						
+						// Get current resource usage
+						resourceUsage := make(map[string]float64)
+						for k, v := range m.currentState.CurrentUsage {
+							resourceUsage[string(k)] = v.Value
+						}
+						
+						// Send idle notification
+						action, err := client.SendIdleNotification(
+							context.Background(),
+							m.currentState.IdleSince,
+							m.currentState.IdleDuration,
+							resourceUsage,
+						)
+						
+						if err != nil {
+							m.handleError(fmt.Errorf("failed to send idle notification: %w", err))
+							return
+						}
+						
+						fmt.Printf("Agent action response: %s\n", action)
+					}()
+				} else {
+					fmt.Printf("System has been idle for %s (not connected to agent)\n", m.currentState.IdleDuration)
+				}
 			}
 		}
 	} else {
@@ -295,28 +333,193 @@ func (m *monitor) checkIdleState() {
 func (m *monitor) connectToAgent() {
 	defer m.wg.Done()
 	
-	// This is a placeholder for actual agent connection implementation
-	// In a real implementation, we would establish a connection to the agent
-	// and set up bidirectional communication
+	if m.config.AgentURL == "" {
+		m.mutex.Lock()
+		m.currentState.Connected = false
+		m.mutex.Unlock()
+		
+		// No agent URL configured, so we'll just run in standalone mode
+		fmt.Println("Running in standalone mode (no agent URL configured)")
+		
+		// Wait for shutdown signal
+		<-m.ctx.Done()
+		return
+	}
+	
+	// Create a new agent client
+	client := protocol.NewAgentClient(m.config.AgentURL, getInstanceID())
+	
+	// Try to connect to the agent
+	err := client.Connect(m.ctx)
+	if err != nil {
+		m.handleError(fmt.Errorf("failed to connect to agent: %w", err))
+		m.mutex.Lock()
+		m.currentState.Connected = false
+		m.mutex.Unlock()
+		
+		// Wait for shutdown signal
+		<-m.ctx.Done()
+		return
+	}
 	
 	m.mutex.Lock()
 	m.currentState.Connected = true
 	m.mutex.Unlock()
 	
-	// Simple keepalive mechanism
+	// Register the instance with the agent
+	err = m.registerWithAgent(client)
+	if err != nil {
+		m.handleError(fmt.Errorf("failed to register with agent: %w", err))
+		client.Disconnect()
+		
+		m.mutex.Lock()
+		m.currentState.Connected = false
+		m.mutex.Unlock()
+		
+		// Wait for shutdown signal
+		<-m.ctx.Done()
+		return
+	}
+	
+	// Set up heartbeat ticker
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	
+	// Set up agent communication loop
 	for {
 		select {
 		case <-m.ctx.Done():
+			// Unregister and disconnect when shutting down
+			m.unregisterFromAgent(client)
+			client.Disconnect()
 			return
+			
 		case <-ticker.C:
-			// In a real implementation, we would send a heartbeat to the agent
-			// For now, we'll just simulate it
-			fmt.Println("Sending heartbeat to agent")
+			// Send heartbeat to agent
+			err := m.sendHeartbeat(client)
+			if err != nil {
+				m.handleError(fmt.Errorf("heartbeat failed: %w", err))
+				
+				// Try to reconnect
+				if !client.IsConnected() {
+					err = client.Connect(m.ctx)
+					if err != nil {
+						m.handleError(fmt.Errorf("reconnect failed: %w", err))
+						m.mutex.Lock()
+						m.currentState.Connected = false
+						m.mutex.Unlock()
+						continue
+					}
+					
+					// Re-register after reconnect
+					err = m.registerWithAgent(client)
+					if err != nil {
+						m.handleError(fmt.Errorf("re-registration failed: %w", err))
+						m.mutex.Lock()
+						m.currentState.Connected = false
+						m.mutex.Unlock()
+						continue
+					}
+					
+					m.mutex.Lock()
+					m.currentState.Connected = true
+					m.mutex.Unlock()
+				}
+			}
 		}
 	}
+}
+
+// registerWithAgent registers the monitor with the agent
+func (m *monitor) registerWithAgent(client *protocol.AgentClient) error {
+	// Get thresholds from configuration
+	thresholds := make(map[string]float64)
+	for k, v := range m.config.Thresholds {
+		thresholds[string(k)] = v
+	}
+	
+	// Get instance metadata
+	instanceType, region, zone, provider := getInstanceMetadata()
+	
+	// Register with the agent
+	return client.RegisterInstance(m.ctx, instanceType, region, zone, provider, thresholds, m.config.NapTime)
+}
+
+// unregisterFromAgent unregisters the monitor from the agent
+func (m *monitor) unregisterFromAgent(client *protocol.AgentClient) {
+	err := client.UnregisterInstance(m.ctx)
+	if err != nil {
+		m.handleError(fmt.Errorf("failed to unregister from agent: %w", err))
+	}
+}
+
+// sendHeartbeat sends a heartbeat to the agent
+func (m *monitor) sendHeartbeat(client *protocol.AgentClient) error {
+	// Get current resource usage
+	resourceUsage := make(map[string]float64)
+	for k, v := range m.currentState.CurrentUsage {
+		resourceUsage[string(k)] = v.Value
+	}
+	
+	// Determine current state
+	state := "active"
+	if m.currentState.IsIdle {
+		state = "idle"
+	}
+	
+	// Send heartbeat
+	commands, err := client.SendHeartbeat(m.ctx, state, resourceUsage)
+	if err != nil {
+		return err
+	}
+	
+	// Process commands
+	for _, command := range commands {
+		m.processAgentCommand(command)
+	}
+	
+	return nil
+}
+
+// processAgentCommand processes a command from the agent
+func (m *monitor) processAgentCommand(command string) {
+	switch command {
+	case "ping":
+		// Simple ping command - nothing to do
+		fmt.Println("Received ping command from agent")
+		
+	case "stop":
+		// Stop command - trigger stop immediately
+		fmt.Println("Received stop command from agent")
+		
+	case "refresh":
+		// Refresh command - trigger immediate resource check
+		fmt.Println("Received refresh command from agent")
+		m.updateResourceUsage()
+		m.checkIdleState()
+		
+	default:
+		m.handleError(fmt.Errorf("unknown command from agent: %s", command))
+	}
+}
+
+// getInstanceID gets the ID of the current instance
+func getInstanceID() string {
+	// In a real implementation, this would get the instance ID from the cloud metadata service
+	// For now, return a placeholder value
+	return "instance-1234"
+}
+
+// getInstanceMetadata gets metadata about the current instance
+func getInstanceMetadata() (string, string, string, string) {
+	// In a real implementation, this would get instance metadata from the cloud metadata service
+	// For now, return placeholder values
+	instanceType := "unknown"
+	region := "unknown"
+	zone := "unknown"
+	provider := "unknown"
+	
+	return instanceType, region, zone, provider
 }
 
 func (m *monitor) notifyIdleStateChange(isIdle bool, duration time.Duration) {

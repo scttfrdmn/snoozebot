@@ -37,6 +37,8 @@ This document outlines the detailed implementation plan for Snoozebot, tracking 
 
 #### Library API Refinement
 - [x] Define fluent API interfaces
+- [x] Integrate agent communication with monitor
+- [x] Implement idle notification flow
 - [ ] Implement configuration validation
 - [ ] Add robust error handling and logging
 - [ ] Implement monitor state persistence

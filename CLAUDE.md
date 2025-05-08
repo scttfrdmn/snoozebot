@@ -26,6 +26,8 @@ Snoozebot is a system for automatically managing cloud resources by monitoring s
   - Protocol messages defined ✅
   - gRPC service interface defined ✅
   - Client implementation created ✅
+  - Integration with monitor ✅
+  - Idle notification flow implemented ✅
   - Server implementation pending ⏳
 - **Phase 3 (Remote Agent)**: Basic structure created, full implementation pending
 - **Phase 4 (Documentation)**: Architecture and API documentation in place, more needed
