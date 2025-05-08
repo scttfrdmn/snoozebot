@@ -149,6 +149,7 @@ func (s *Server) handleLoadPlugin(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	var request struct {
 		PluginName string `json:"plugin_name"`
+		ApiKey     string `json:"api_key,omitempty"`
 		Timeout    int    `json:"timeout_seconds,omitempty"`
 		Retries    int    `json:"retries,omitempty"`
 	}
@@ -160,6 +161,13 @@ func (s *Server) handleLoadPlugin(w http.ResponseWriter, r *http.Request) {
 
 	if request.PluginName == "" {
 		http.Error(w, "Plugin name is required", http.StatusBadRequest)
+		return
+	}
+	
+	// Check if authentication is required
+	authRequired := s.authenticatedManager != nil && s.authenticatedManager.IsAuthenticationEnabled()
+	if authRequired && request.ApiKey == "" {
+		http.Error(w, "API key is required when authentication is enabled", http.StatusUnauthorized)
 		return
 	}
 
@@ -209,9 +217,27 @@ func (s *Server) handleLoadPlugin(w http.ResponseWriter, r *http.Request) {
 		s.logger.Info("Loading plugin", 
 			"name", request.PluginName, 
 			"attempt", loadAttempt, 
-			"max_attempts", request.Retries)
+			"max_attempts", request.Retries,
+			"auth_required", authRequired)
 		
-		cp, err = s.pluginManager.LoadPlugin(ctx, request.PluginName)
+		// Use the appropriate plugin manager based on authentication requirements
+		if authRequired && s.authenticatedManager != nil {
+			cp, err = s.authenticatedManager.LoadPlugin(ctx, request.PluginName)
+			if err == nil {
+				// Successfully loaded, now authenticate if needed
+				if authProvider, ok := cp.(*provider.AuthenticatedProvider); ok {
+					var authSuccess bool
+					authSuccess, err = authProvider.Authenticate(ctx, request.ApiKey)
+					if !authSuccess {
+						err = fmt.Errorf("authentication failed")
+					}
+				}
+			}
+		} else {
+			// Use the standard plugin manager
+			cp, err = s.pluginManager.LoadPlugin(ctx, request.PluginName)
+		}
+		
 		if err == nil {
 			// Successfully loaded
 			break
