@@ -217,7 +217,13 @@ func (m *monitor) updateResourceUsage() {
 	
 	// Add custom monitors to the resource manager
 	for name, monitorFn := range m.customMonitors {
-		resourceManager.AddCustomMonitor(name, monitorFn)
+		// Create an adapter to convert ResourceMonitorFunc to CustomMonitorFunc
+		adaptedFn := func(fn ResourceMonitorFunc) resources.CustomMonitorFunc {
+			return func() (float64, error) {
+				return fn()
+			}
+		}(monitorFn)
+		resourceManager.AddCustomMonitor(name, adaptedFn)
 	}
 	
 	// Get all usage
@@ -229,8 +235,10 @@ func (m *monitor) updateResourceUsage() {
 	
 	// Convert to our internal format
 	for resourceType, usage := range allUsage {
-		m.currentState.CurrentUsage[resourceType] = &ResourceUsage{
-			Type:      resourceType,
+		// Convert resources.ResourceType to monitor.ResourceType
+		monitorResourceType := ResourceType(string(resourceType))
+		m.currentState.CurrentUsage[monitorResourceType] = &ResourceUsage{
+			Type:      monitorResourceType,
 			Value:     usage.Value,
 			Timestamp: usage.Timestamp,
 		}

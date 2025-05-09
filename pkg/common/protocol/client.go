@@ -10,7 +10,6 @@ import (
 	"github.com/scttfrdmn/snoozebot/pkg/common/protocol/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // AgentClient is a client for communicating with the remote agent

@@ -81,15 +81,16 @@ func getMemoryUsage() (float64, error) {
 	}
 
 	// Parse memory statistics
-	var freePages, activePages, inactivePages, wiredPages, compressedPages uint64
+	var activePages, inactivePages, wiredPages, compressedPages uint64
 
 	for _, line := range lines[1:] {
 		if strings.Contains(line, "Pages free:") {
-			parts := strings.Split(line, ":")
-			if len(parts) >= 2 {
-				freeStr := strings.TrimSpace(strings.Replace(parts[1], ".", "", -1))
-				freePages, _ = strconv.ParseUint(freeStr, 10, 64)
-			}
+			// We're not using free pages in our calculation, so we're just skipping this
+			// parts := strings.Split(line, ":")
+			// if len(parts) >= 2 {
+			//	freeStr := strings.TrimSpace(strings.Replace(parts[1], ".", "", -1))
+			//	// Unused: freePages, _ = strconv.ParseUint(freeStr, 10, 64)
+			// }
 		} else if strings.Contains(line, "Pages active:") {
 			parts := strings.Split(line, ":")
 			if len(parts) >= 2 {
