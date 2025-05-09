@@ -44,8 +44,8 @@ func TestProviderInterface(t *testing.T, provider plugin.CloudProvider) {
 }
 
 // MockInstance creates a mock instance info for testing
-func MockInstance(id, name, instanceType, region, zone, state string) *plugin.InstanceInfo {
-	return &plugin.InstanceInfo{
+func MockInstance(id, name, instanceType, region, zone, state string) *plugin.CloudInstanceInfo {
+	return &plugin.CloudInstanceInfo{
 		ID:         id,
 		Name:       name,
 		Type:       instanceType,

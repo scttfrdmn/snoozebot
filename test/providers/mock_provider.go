@@ -15,7 +15,7 @@ type MockProvider struct {
 	name          string
 	version       string
 	logger        hclog.Logger
-	instances     []*plugin.InstanceInfo
+	instances     []*plugin.CloudInstanceInfo
 	instanceState map[string]string
 }
 
@@ -26,7 +26,7 @@ func NewMockProvider(name string, logger hclog.Logger) *MockProvider {
 	}
 
 	// Create some mock instances
-	instances := []*plugin.InstanceInfo{
+	instances := []*plugin.CloudInstanceInfo{
 		MockInstance("i-123456789", "test-instance-1", "t2.micro", "us-west-2", "us-west-2a", "running"),
 		MockInstance("i-987654321", "test-instance-2", "t2.small", "us-west-2", "us-west-2b", "stopped"),
 		MockInstance("i-555555555", "test-instance-3", "t2.medium", "us-west-2", "us-west-2c", "running"),
@@ -53,7 +53,7 @@ func (p *MockProvider) GetAPIVersion() string {
 }
 
 // GetInstanceInfo gets information about the current instance
-func (p *MockProvider) GetInstanceInfo(ctx context.Context) (*plugin.InstanceInfo, error) {
+func (p *MockProvider) GetInstanceInfo(ctx context.Context) (*plugin.CloudInstanceInfo, error) {
 	p.logger.Info("Getting instance info (mock)")
 	
 	// Default to the first instance or use instance ID from environment
@@ -112,7 +112,7 @@ func (p *MockProvider) GetProviderVersion() string {
 }
 
 // ListInstances lists all instances
-func (p *MockProvider) ListInstances(ctx context.Context) ([]*plugin.InstanceInfo, error) {
+func (p *MockProvider) ListInstances(ctx context.Context) ([]*plugin.CloudInstanceInfo, error) {
 	p.logger.Info("Listing instances (mock)")
 	
 	// Random delay to simulate API call
