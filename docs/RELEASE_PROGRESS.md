@@ -75,8 +75,8 @@ This document summarizes the progress made on the Snoozebot 0.1.0 release plan.
 - Added documentation notes about v0.1.0 requirements
 
 ### 7. Added Cloud Provider Credential Setup
-- Created comprehensive guides for Azure and GCP credentials setup
-- Developed shell scripts to automate credential configuration
+- Created comprehensive guides for AWS, Azure, and GCP credentials setup
+- Developed shell scripts to automate credential configuration for all providers
 - Provided detailed instructions for creating test environments in each cloud
 - Added security best practices for credential management
 
@@ -133,6 +133,7 @@ During this work, several documentation files were created:
 - **EXAMPLES_UPDATE.md**: Description of the updates made to the example code
 - **TEST_FIXES.md**: Documentation of the unit test fixes
 - **INTEGRATION_TEST_FIXES.md**: Explanation of the approach for fixing integration tests
+- **AWS_CREDENTIALS_SETUP.md**: Comprehensive guide for setting up AWS credentials
 - **AZURE_CREDENTIALS_SETUP.md**: Comprehensive guide for setting up Azure credentials
 - **GCP_CREDENTIALS_SETUP.md**: Comprehensive guide for setting up GCP credentials
 - **CLOUD_TEST_ENVIRONMENTS.md**: Detailed instructions for setting up test environments

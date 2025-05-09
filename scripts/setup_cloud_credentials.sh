@@ -31,72 +31,19 @@ echo -e "${NC}"
 
 setup_aws() {
     echo -e "${BLUE}===== AWS Credentials Setup =====${NC}"
-    echo "AWS credentials are typically set up through the AWS CLI."
-    echo ""
     
-    # Check if AWS CLI is installed
-    if ! command -v aws &> /dev/null; then
-        echo -e "${RED}Error: AWS CLI not found. Please install it first.${NC}"
-        echo "Installation instructions: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+    # Check if AWS setup script exists
+    AWS_SCRIPT="$SCRIPT_DIR/setup_aws_credentials.sh"
+    if [ ! -f "$AWS_SCRIPT" ]; then
+        echo -e "${RED}Error: AWS setup script not found at $AWS_SCRIPT${NC}"
         return 1
     fi
     
-    # Check if AWS credentials already exist
-    if [ -f "$HOME/.aws/credentials" ]; then
-        echo -e "${YELLOW}AWS credentials file already exists.${NC}"
-        echo "Current profiles:"
-        aws configure list-profiles
-        echo ""
-    else
-        echo -e "${YELLOW}AWS credentials file not found. Let's set it up.${NC}"
-    fi
+    # Make the script executable
+    chmod +x "$AWS_SCRIPT"
     
-    # Offer to set up new profile
-    echo "Would you like to set up a new AWS profile for Snoozebot? (y/N):"
-    read -r SETUP_AWS
-    
-    if [[ "$SETUP_AWS" =~ ^[Yy].* ]]; then
-        echo ""
-        echo "Please enter a name for the AWS profile (default: snoozebot):"
-        read -r AWS_PROFILE_NAME
-        
-        if [ -z "$AWS_PROFILE_NAME" ]; then
-            AWS_PROFILE_NAME="snoozebot"
-        fi
-        
-        echo "Setting up AWS profile: $AWS_PROFILE_NAME"
-        aws configure --profile "$AWS_PROFILE_NAME"
-        
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}AWS profile '$AWS_PROFILE_NAME' created successfully!${NC}"
-            
-            # Create Snoozebot AWS config
-            CONFIG_DIR="$HOME/.config/snoozebot"
-            mkdir -p "$CONFIG_DIR"
-            
-            CONFIG_FILE="$CONFIG_DIR/aws-config.json"
-            cat > "$CONFIG_FILE" << EOF
-{
-  "provider": "aws",
-  "credentials": {
-    "profileName": "$AWS_PROFILE_NAME"
-  }
-}
-EOF
-            echo "Snoozebot AWS configuration created at: $CONFIG_FILE"
-            
-            # Set environment variable
-            export AWS_PROFILE="$AWS_PROFILE_NAME"
-            
-            echo ""
-            echo "To use these credentials with Snoozebot, add the following to your shell profile:"
-            echo -e "${YELLOW}export AWS_PROFILE=$AWS_PROFILE_NAME${NC}"
-        else
-            echo -e "${RED}Failed to set up AWS profile.${NC}"
-        fi
-    else
-        echo "Skipping AWS credentials setup."
-    fi
+    # Run the AWS setup script
+    "$AWS_SCRIPT"
     
     echo -e "${GREEN}AWS setup complete!${NC}"
     echo ""
@@ -174,7 +121,7 @@ echo "Refer to the documentation for more details on how to configure Snoozebot"
 echo "to use these credentials."
 echo ""
 echo "Documentation files:"
-echo "- AWS: README.md"
+echo "- AWS: docs/AWS_CREDENTIALS_SETUP.md"
 echo "- Azure: docs/AZURE_CREDENTIALS_SETUP.md"
 echo "- GCP: docs/GCP_CREDENTIALS_SETUP.md"
 echo ""
