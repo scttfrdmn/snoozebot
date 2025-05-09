@@ -35,6 +35,9 @@ func NewCustomProvider(logger hclog.Logger) (*CustomProvider, error) {
 	provider.AddCapability("start_instance")
 	provider.AddCapability("stop_instance")
 	
+	// Make sure to implement the Shutdown method as well
+	// This is a new requirement in v0.1.0
+	
 	// Create and set the manifest
 	manifest := version.NewPluginManifest("custom-provider", "0.1.0", "Custom cloud provider example")
 	manifest.Author = "Your Name"
@@ -49,12 +52,12 @@ func NewCustomProvider(logger hclog.Logger) (*CustomProvider, error) {
 }
 
 // GetInstanceInfo gets information about the current instance
-func (p *CustomProvider) GetInstanceInfo(ctx context.Context) (*snoozePlugin.InstanceInfo, error) {
+func (p *CustomProvider) GetInstanceInfo(ctx context.Context) (*snoozePlugin.CloudInstanceInfo, error) {
 	p.logger.Info("Getting instance info")
 	
 	// In a real implementation, you would query your cloud provider API
 	// For this example, we'll return a mock instance
-	return &snoozePlugin.InstanceInfo{
+	return &snoozePlugin.CloudInstanceInfo{
 		ID:         "i-custom123",
 		Name:       "custom-instance",
 		Type:       "custom.micro",
@@ -80,12 +83,12 @@ func (p *CustomProvider) StartInstance(ctx context.Context) error {
 }
 
 // ListInstances lists all instances
-func (p *CustomProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.InstanceInfo, error) {
+func (p *CustomProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.CloudInstanceInfo, error) {
 	p.logger.Info("Listing instances")
 	
 	// In a real implementation, you would query your cloud provider API
 	// For this example, we'll return mock instances
-	instances := []*snoozePlugin.InstanceInfo{
+	instances := []*snoozePlugin.CloudInstanceInfo{
 		{
 			ID:         "i-custom123",
 			Name:       "custom-instance-1",
@@ -107,6 +110,15 @@ func (p *CustomProvider) ListInstances(ctx context.Context) ([]*snoozePlugin.Ins
 	}
 	
 	return instances, nil
+}
+
+// Shutdown is called when the plugin is being unloaded
+func (p *CustomProvider) Shutdown() {
+	p.logger.Info("Shutting down custom provider")
+	// Perform any cleanup operations here, such as:
+	// - Closing connections
+	// - Releasing resources
+	// - Stopping background workers
 }
 
 func main() {
