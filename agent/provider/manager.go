@@ -91,22 +91,25 @@ func (pm *PluginManagerImpl) LoadPlugin(ctx context.Context, pluginName string) 
 		return nil, fmt.Errorf("error dispensing plugin %s: %w", pluginName, err)
 	}
 
-	// Cast to CloudProvider interface
-	cp, ok := raw.(CloudProvider)
+	// Check if the plugin implements the pkg/plugin.CloudProvider interface
+	pluginImpl, ok := raw.(pluginlib.CloudProvider)
 	if !ok {
 		client.Kill()
-		return nil, fmt.Errorf("plugin %s does not implement CloudProvider interface", pluginName)
+		return nil, fmt.Errorf("plugin %s does not implement pkg/plugin.CloudProvider interface", pluginName)
 	}
+
+	// Create an adapter to convert between plugin and agent provider interfaces
+	adapter := NewPluginAdapter(pluginImpl, "")
 
 	// Store the plugin instance
 	pm.loadedPlugins[pluginName] = &pluginInstance{
 		client:         rpcClient,
 		pluginClient:   client,
-		cloudProvider:  cp,
+		cloudProvider:  adapter,
 	}
 
-	pm.logger.Info("Loaded plugin", "name", pluginName, "provider", cp.GetProviderName(), "version", cp.GetProviderVersion())
-	return cp, nil
+	pm.logger.Info("Loaded plugin", "name", pluginName, "provider", adapter.GetProviderName(), "version", adapter.GetProviderVersion())
+	return adapter, nil
 }
 
 // UnloadPlugin unloads a cloud provider plugin

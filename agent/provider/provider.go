@@ -48,6 +48,9 @@ type CloudProvider interface {
 	
 	// GetProviderVersion returns the version of the cloud provider plugin
 	GetProviderVersion() string
+	
+	// ListInstances lists all instances
+	ListInstances(ctx context.Context) ([]*InstanceInfo, error)
 }
 
 // PluginManager manages cloud provider plugins
